@@ -1,486 +1,118 @@
 @import "tailwindcss";
+@import "./tokens.pcss";
 
-@theme {
-  --color-background: #111111;
-  --color-surface: #1A1A1A;
-  --color-card: #232323;
-  --color-card-elevated: #2A2A2A;
-  --color-text-primary: #F2F2F2;
-  --color-text-secondary: #A8A8A8;
-  --color-text-muted: #666666;
-  --color-accent: #C96A2B;
-  --color-accent-hover: #E07A35;
-  --color-border-precise: rgba(255, 255, 255, 0.05);
-  --color-border-hover: rgba(255, 255, 255, 0.12);
-
-  --font-heading: 'General Sans', 'Inter', sans-serif;
-  --font-body: 'Inter', sans-serif;
-
-  /* Fluid Spacing Variables */
-  --spacing-section-py: clamp(6rem, 12vw, 16rem);
-  --spacing-container-px: clamp(1.5rem, 6vw, 8rem);
-  --spacing-card-p: clamp(1.5rem, 3vw, 3rem);
-  --spacing-block-my: clamp(1.5rem, 3.5vw, 4rem);
-
-  /* Fluid Typography Variables */
-  --font-size-display-xl: clamp(3.2rem, 9.5vw, 10rem);
-  --font-size-display-l: clamp(2.4rem, 6.5vw, 6.5rem);
-  --font-size-section-h: clamp(1.8rem, 4.2vw, 4.2rem);
-  --font-size-body-l: clamp(1.05rem, 1.4vw, 1.25rem);
-  --font-size-body-s: clamp(0.875rem, 1.1vw, 1rem);
-  --font-size-label: clamp(0.7rem, 0.85vw, 0.8rem);
-  --font-size-caption: clamp(0.65rem, 0.75vw, 0.72rem);
-}
-
-/* Base resets & document settings */
+/* =========================================================
+   GLOBAL BASE STYLES & RESETS
+   ========================================================= */
 @layer base {
-  html, body {
-    background-color: var(--color-background);
-    color: var(--color-text-primary);
-    font-family: var(--font-body);
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    overflow-x: hidden;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    letter-spacing: var(--tracking-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    selection-background-color: var(--color-accent);
-    selection-color: var(--color-background);
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  /* Typography Base Resets */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading);
     font-weight: 500;
-    letter-spacing: -0.025em;
-  }
-}
-
-/* Reusable UI Systems & Design Language Classes */
-@layer utilities {
-  /* ==========================================================
-     1. Spacing System
-     ========================================================== */
-  .section-padding {
-    padding-top: var(--spacing-section-py);
-    padding-bottom: var(--spacing-section-py);
   }
 
-  .container-custom {
-    width: 100%;
-    max-width: 1600px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: var(--spacing-container-px);
-    padding-right: var(--spacing-container-px);
+  /* Link Defaults */
+  a {
+    color: inherit;
+    text-decoration: none;
+    background-color: transparent;
+    transition: color var(--animate-duration-medium) var(--ease-standard),
+      opacity var(--animate-duration-medium) var(--ease-standard);
   }
 
-  .card-padding {
-    padding: var(--spacing-card-p);
-  }
-
-  .block-spacing {
-    margin-top: var(--spacing-block-my);
-    margin-bottom: var(--spacing-block-my);
-  }
-
-  .layout-wrapper {
-    position: relative;
-    width: 100%;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Grid Layouts */
-  .grid-industrial {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: clamp(1.2rem, 2.5vw, 2.5rem);
-  }
-
-  /* ==========================================================
-     2. Vertical Section Rhythm System
-     ========================================================== */
-  .section-gap {
-    margin-bottom: clamp(6rem, 12vw, 16rem);
-  }
-
-  .heading-gap {
-    margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
-  }
-
-  .block-gap {
-    margin-bottom: clamp(1.2rem, 2.5vw, 2.8rem);
-  }
-
-  .large-section-break {
-    padding-top: clamp(8rem, 15vw, 22rem);
-  }
-
-  /* ==========================================================
-     3. Dedicated Layout Container System
-     ========================================================== */
-  .container-full {
-    width: 100%;
-    position: relative;
-  }
-
-  .container-editorial {
-    width: 100%;
-    max-width: 1536px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: clamp(1.5rem, 5vw, 6rem);
-    padding-right: clamp(1.5rem, 5vw, 6rem);
-  }
-
-  .container-content {
-    width: 100%;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: clamp(1.5rem, 4vw, 4rem);
-    padding-right: clamp(1.5rem, 4vw, 4rem);
-  }
-
-  .container-narrow {
-    width: 100%;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: clamp(1rem, 3vw, 2rem);
-    padding-right: clamp(1rem, 3vw, 2rem);
-  }
-
-  .container-showcase {
-    width: 100%;
-    max-width: 1800px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: clamp(1.5rem, 6vw, 8rem);
-    padding-right: clamp(1.5rem, 6vw, 8rem);
-  }
-
-  /* ==========================================================
-     4. Architectural 12-Column Alignment Grid
-     ========================================================== */
-  .grid-12 {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: clamp(1rem, 2.2vw, 2.2rem);
-  }
-
-  /* Spans */
-  .col-span-all {
-    grid-column: span 12 / span 12;
-  }
-
-  /* Editorial left-aligned layouts (e.g. Header cols 1-8, sidebar 9-12) */
-  .col-editorial-left {
-    grid-column: 1 / span 12;
-  }
-  @media (min-width: 1024px) {
-    .col-editorial-left {
-      grid-column: 1 / span 8;
-    }
-  }
-
-  .col-editorial-right {
-    grid-column: 1 / span 12;
-  }
-  @media (min-width: 1024px) {
-    .col-editorial-right {
-      grid-column: 9 / span 4;
-    }
-  }
-
-  /* Content centered (e.g., Reading area cols 3-10) */
-  .col-content-center {
-    grid-column: 1 / span 12;
-  }
-  @media (min-width: 768px) {
-    .col-content-center {
-      grid-column: 2 / span 10;
-    }
-  }
-  @media (min-width: 1024px) {
-    .col-content-center {
-      grid-column: 3 / span 8;
-    }
-  }
-
-  /* Narrow reading offsets (e.g. Text cols 4-9) */
-  .col-reading-zone {
-    grid-column: 1 / span 12;
-  }
-  @media (min-width: 768px) {
-    .col-reading-zone {
-      grid-column: 2 / span 10;
-    }
-  }
-  @media (min-width: 1024px) {
-    .col-reading-zone {
-      grid-column: 4 / span 6;
-    }
-  }
-
-  /* Showcase offsets (Asymmetrical panels, e.g. cols 1-7 vs 8-12) */
-  .col-showcase-left {
-    grid-column: 1 / span 12;
-  }
-  @media (min-width: 1024px) {
-    .col-showcase-left {
-      grid-column: 1 / span 7;
-    }
-  }
-
-  .col-showcase-right {
-    grid-column: 1 / span 12;
-  }
-  @media (min-width: 1024px) {
-    .col-showcase-right {
-      grid-column: 8 / span 5;
-    }
-  }
-
-  /* ==========================================================
-     5. Typography System (Editorial & Precise)
-     ========================================================== */
-  .text-display-xl {
-    font-size: var(--font-size-display-xl);
-    font-family: var(--font-heading);
-    line-height: 0.95;
-    font-weight: 500;
-    letter-spacing: -0.04em;
-    text-transform: uppercase;
-  }
-
-  .text-display-l {
-    font-size: var(--font-size-display-l);
-    font-family: var(--font-heading);
-    line-height: 1.0;
-    font-weight: 500;
-    letter-spacing: -0.03em;
-    text-transform: uppercase;
-  }
-
-  .text-section-heading {
-    font-size: var(--font-size-section-h);
-    font-family: var(--font-heading);
-    line-height: 1.1;
-    font-weight: 500;
-    letter-spacing: -0.025em;
-    text-transform: uppercase;
-  }
-
-  .text-body-l {
-    font-size: var(--font-size-body-l);
-    font-family: var(--font-body);
-    line-height: 1.6;
-    font-weight: 400;
-    color: var(--color-text-secondary);
-  }
-
-  .text-body-s {
-    font-size: var(--font-size-body-s);
-    font-family: var(--font-body);
-    line-height: 1.5;
-    font-weight: 400;
-    color: var(--color-text-secondary);
-  }
-
-  .text-label-custom {
-    font-size: var(--font-size-label);
-    font-family: var(--font-body);
-    font-weight: 600;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--color-text-primary);
-  }
-
-  .text-caption-custom {
-    font-size: var(--font-size-caption);
-    font-family: var(--font-body);
-    font-weight: 400;
-    letter-spacing: 0.05em;
-    color: var(--color-text-muted);
-  }
-
-  /* ==========================================================
-     6. Surface System (No heavy glassmorphism, no strong blur)
-     ========================================================== */
-  .surface-primary {
-    background-color: var(--color-background);
-  }
-
-  .surface-secondary {
-    background-color: var(--color-surface);
-  }
-
-  .surface-elevated {
-    background-color: var(--color-card);
-    border: 1px solid var(--color-border-precise);
-  }
-
-  .surface-elevated-hover {
-    background-color: var(--color-card-elevated);
-    border: 1px solid var(--color-border-hover);
-  }
-
-  .overlay-glass {
-    background-color: rgba(26, 26, 26, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid var(--color-border-precise);
-  }
-
-  /* ==========================================================
-     7. Border & Divider System
-     ========================================================== */
-  .border-precise {
-    border: 1px solid var(--color-border-precise);
-  }
-
-  .border-precise-t {
-    border-top: 1px solid var(--color-border-precise);
-  }
-
-  .border-precise-b {
-    border-bottom: 1px solid var(--color-border-precise);
-  }
-
-  .border-precise-l {
-    border-left: 1px solid var(--color-border-precise);
-  }
-
-  .divider-precise {
-    height: 1px;
-    width: 100%;
-    background: linear-gradient(90deg, 
-      var(--color-border-precise) 0%, 
-      rgba(255, 255, 255, 0.08) 50%, 
-      var(--color-border-precise) 100%
-    );
-  }
-
-  .divider-precise-vertical {
-    width: 1px;
-    height: 100%;
-    background: linear-gradient(180deg, 
-      var(--color-border-precise) 0%, 
-      rgba(255, 255, 255, 0.08) 50%, 
-      var(--color-border-precise) 100%
-    );
-  }
-
-  /* ==========================================================
-     8. Shadows & Subtle Glow System
-     ========================================================== */
-  .shadow-industrial {
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-  }
-
-  .glow-accent {
-    box-shadow: 0 0 40px -10px rgba(201, 106, 43, 0.15);
-  }
-
-  .glow-accent-strong {
-    box-shadow: 0 0 25px 0px rgba(201, 106, 43, 0.25);
-  }
-
-  /* ==========================================================
-     9. Interactive states / Hover states
-     ========================================================== */
-  .hover-lift {
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-                background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .hover-lift:hover {
-    transform: translateY(-2px);
-    border-color: var(--color-border-hover);
-    background-color: var(--color-card-elevated);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-  }
-
-  .hover-link-accent {
-    color: var(--color-text-secondary);
-    transition: color 0.3s ease;
-    position: relative;
-  }
-
-  .hover-link-accent:hover {
-    color: var(--color-text-primary);
-  }
-
-  .hover-link-accent::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background-color: var(--color-accent);
-    transform: scaleX(0);
-    transform-origin: right;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .hover-link-accent:hover::after {
-    transform: scaleX(1);
-    transform-origin: left;
-  }
-
-  /* ==========================================================
-     10. Accent System Helper Classes (Orange strictly controlled)
-     ========================================================== */
-  .accent-dot {
-    width: 6px;
-    height: 6px;
-    background-color: var(--color-accent);
-    border-radius: 55%;
-    display: inline-block;
-  }
-
-  .accent-dot-active {
-    width: 6px;
-    height: 6px;
-    background-color: var(--color-accent);
-    border-radius: 55%;
-    display: inline-block;
-    position: relative;
-  }
-
-  .accent-dot-active::after {
-    content: '';
-    position: absolute;
-    inset: -3px;
-    border: 1px solid var(--color-accent);
-    border-radius: 50%;
-    animation: accentPing 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-  }
-
-  @keyframes accentPing {
-    0% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(2.2); opacity: 0; }
-  }
-
-  .accent-bar-active {
-    height: 2px;
-    background-color: var(--color-accent);
-    position: relative;
-  }
-
-  .accent-bar-active::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    box-shadow: 0 0 10px rgba(201, 106, 43, 0.6);
-  }
-
-  .accent-highlight {
+  a:hover {
     color: var(--color-accent);
+  }
+
+  /* Button Resets */
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    outline: none;
+    transition: background-color var(--animate-duration-medium) var(--ease-standard),
+      border-color var(--animate-duration-medium) var(--ease-standard),
+      color var(--animate-duration-medium) var(--ease-standard),
+      opacity var(--animate-duration-medium) var(--ease-standard);
+  }
+
+  /* Image Defaults */
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Code styles */
+  code,
+  pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9em;
+    background-color: var(--color-surface-secondary);
+    border-radius: var(--radius-sm);
+    padding: 0.2em 0.4em;
+    border: 1px solid var(--color-border-precise);
+  }
+
+  pre {
+    padding: 1rem;
+    overflow-x: auto;
+  }
+
+  pre code {
+    background-color: transparent;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+  }
+
+  /* Text Selection Colors */
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-background);
+  }
+
+  /* Focus Styles */
+  *:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 4px;
   }
 
   /* Custom Scrollbar */
@@ -488,14 +120,286 @@
     width: 6px;
     height: 6px;
   }
+
   ::-webkit-scrollbar-track {
     background: var(--color-background);
   }
+
   ::-webkit-scrollbar-thumb {
-    background: var(--color-card);
-    border-radius: 0;
+    background: var(--color-surface-muted);
+    border-radius: var(--radius-full);
   }
+
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-accent);
+    background: var(--color-text-muted);
   }
+}
+
+/* =========================================================
+   TYPOGRAPHY SYSTEM
+   ========================================================= */
+.text-display {
+  font-family: var(--font-heading);
+  font-size: var(--text-display);
+  font-weight: 300;
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
+}
+
+.text-heading {
+  font-family: var(--font-heading);
+  font-size: var(--text-heading);
+  font-weight: 400;
+  letter-spacing: var(--tracking-heading);
+  line-height: var(--leading-heading);
+}
+
+.text-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-title);
+  font-weight: 500;
+  letter-spacing: var(--tracking-title);
+  line-height: var(--leading-title);
+}
+
+.text-body {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: 400;
+  letter-spacing: var(--tracking-body);
+  line-height: var(--leading-body);
+}
+
+.text-caption {
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  letter-spacing: var(--tracking-caption);
+  line-height: var(--leading-caption);
+}
+
+.text-label {
+  font-family: var(--font-heading);
+  font-size: var(--text-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  line-height: var(--leading-label);
+  color: var(--color-text-muted);
+}
+
+/* Typography Helpers */
+.tracking-tight-display {
+  letter-spacing: var(--tracking-display);
+}
+
+.tracking-wide-label {
+  letter-spacing: var(--tracking-label);
+}
+
+.font-light {
+  font-weight: 300;
+}
+
+.font-normal {
+  font-weight: 400;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+/* =========================================================
+   LAYOUT SYSTEM & PRIMITIVES
+   ========================================================= */
+/* Architectural Grid System */
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(1rem, 2.2vw, 2.2rem);
+}
+
+.col-editorial-left {
+  grid-column: span 12;
+}
+
+.col-editorial-right {
+  grid-column: span 12;
+}
+
+.col-reading-zone {
+  grid-column: span 12;
+}
+
+.col-asym-left {
+  grid-column: span 12;
+}
+
+.col-asym-right {
+  grid-column: span 12;
+}
+
+@media (min-width: 1024px) {
+  .col-editorial-left {
+    grid-column: span 8;
+  }
+
+  .col-editorial-right {
+    grid-column: span 4;
+  }
+
+  .col-reading-zone {
+    grid-column: 4 / span 6;
+  }
+
+  .col-asym-left {
+    grid-column: span 7;
+  }
+
+  .col-asym-right {
+    grid-column: span 5;
+  }
+}
+
+/* Vertical Rhythm spacing utilities */
+.section-gap {
+  margin-bottom: var(--spacing-section-gap);
+}
+
+.heading-gap {
+  margin-bottom: var(--spacing-heading-gap);
+}
+
+.block-gap {
+  margin-bottom: var(--spacing-block-gap);
+}
+
+.large-section-break {
+  padding-top: var(--spacing-large-section-break);
+}
+
+/* =========================================================
+   SURFACE SYSTEM
+   ========================================================= */
+.surface-primary {
+  background-color: var(--color-surface-primary);
+  color: var(--color-text-primary);
+}
+
+.surface-secondary {
+  background-color: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+}
+
+.surface-muted {
+  background-color: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+}
+
+.surface-transparent {
+  background-color: var(--color-surface-transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Border treatments */
+.border-precise {
+  border: 1px solid var(--color-border-precise);
+}
+
+.border-hover {
+  border: 1px solid var(--color-border-precise);
+  transition: border-color var(--animate-duration-medium) var(--ease-standard);
+}
+
+.border-hover:hover {
+  border-color: var(--color-border-hover);
+}
+
+/* =========================================================
+   ACCESSIBILITY & MOTION PREFERENCES
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+}
+
+/* =========================================================
+   MICROSCOPIC REFINEMENT ANIMATIONS (ON LOAD)
+   ========================================================= */
+@keyframes resolve-material {
+  0% {
+    opacity: 0;
+    filter: brightness(0.6);
+  }
+
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@keyframes sharpen-text {
+  0% {
+    opacity: 0;
+    filter: blur(6px);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes fade-in-metadata {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0.35;
+  }
+}
+
+.animate-resolve-material {
+  animation: resolve-material 650ms var(--ease-entrance) forwards;
+}
+
+.animate-sharpen-text {
+  animation: sharpen-text 650ms var(--ease-entrance) forwards;
+}
+
+.animate-fade-in-metadata {
+  animation: fade-in-metadata 650ms var(--ease-entrance) forwards;
+  animation-delay: 150ms;
+}
+
+/* Metadata interactive styling (Discovery mode) */
+.metadata-interactive {
+  opacity: 0.35;
+  transition: opacity var(--animate-duration-medium) var(--ease-standard);
+  pointer-events: auto !important;
+}
+
+.metadata-interactive:hover {
+  opacity: 0.95;
 }

@@ -1,0 +1,97 @@
+/* SHOURYA // FOUNDRY — Selected Works Grid Styles */
+
+.selected-works-section {
+  padding-top: var(--spacing-section-gap);
+  padding-bottom: var(--spacing-large-section-break);
+  position: relative;
+  width: 100%;
+}
+
+.selected-works-header {
+  margin-bottom: var(--spacing-heading-gap);
+  align-items: flex-end;
+}
+
+.selected-works-title {
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+.selected-works-subtitle {
+  text-align: right;
+  max-width: 32ch;
+  margin-left: auto;
+}
+
+.selected-works-grid {
+  position: relative;
+  width: 100%;
+  /* Padding bottom to give breathing space at the end of the scroll */
+  padding-bottom: 120px;
+}
+
+/* Staggered project placeholders */
+.project-placeholder {
+  height: 220px;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  box-sizing: border-box;
+}
+
+/* Asymmetric staggered placements (using 12-column template) */
+.project-placeholder-0 {
+  grid-column: 1 / span 5;
+}
+
+.project-placeholder-1 {
+  grid-column: 8 / span 5;
+  margin-top: 120px; /* staggered right offset */
+}
+
+.project-placeholder-2 {
+  grid-column: 2 / span 5;
+  margin-top: 80px;
+}
+
+.project-placeholder-3 {
+  grid-column: 8 / span 5;
+  margin-top: 120px;
+}
+
+.project-placeholder-4 {
+  grid-column: 4 / span 5;
+  margin-top: 80px;
+}
+
+/* Layer 2 (orange inverted) overrides */
+.selected-works-layer2 .selected-works-title {
+  color: #181818 !important;
+}
+
+.selected-works-layer2 .selected-works-subtitle {
+  color: #181818 !important;
+  opacity: 0.8;
+}
+
+/* Responsive collapse for laptops, tablets and mobiles */
+@media (max-width: 1023px) {
+  .project-placeholder {
+    grid-column: span 12 !important;
+    margin-top: 0 !important;
+    height: 200px;
+    margin-bottom: 2rem;
+  }
+  
+  .selected-works-grid {
+    gap: 0 !important; /* Stack vertically */
+  }
+
+  .selected-works-subtitle {
+    text-align: left;
+    margin-left: 0;
+    max-width: 100%;
+    margin-top: 1rem;
+  }
+}

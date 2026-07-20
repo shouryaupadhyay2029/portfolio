@@ -1,0 +1,279 @@
+/* ── STAGGERED ENTRANCE ────────────────────────────────── */
+/* Each layer of the hero reveals in sequence */
+.hero-root .hero-wordmark {
+  animation-delay: 80ms;
+}
+.hero-root .hero-sub-row {
+  animation-delay: 220ms;
+  animation: fade-in-metadata 700ms var(--ease-entrance) 220ms forwards;
+  opacity: 0;
+}
+
+/* =========================================================
+   HERO — CONCEPT A: EDITORIAL
+   
+   Composition grid:
+   ┌──────────────────────────────────────────────────────┐
+   │  CURRENT FOCUS      ╌╌╌     28°36′N   NEW DELHI     │  ← top bar
+   │                                                      │
+   │  SHOURYA                                             │  ← wordmark (left ~60%)
+   │     // FOUNDRY                                       │
+   │                                                      │
+   │  Designing digital     [Practice sidebar]            │  ← sub-row
+   │  products with…                                      │
+   │                                                      │
+   │  ────────────────────────────────────────────────    │  ← preview rule
+   │  SELECTED WORK  01     Foundry — Design System  ↓   │  ← bottom strip
+   └──────────────────────────────────────────────────────┘
+   ========================================================= */
+
+/* Root: full-viewport, flex column, left-edge padding */
+.hero-root {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding:
+    clamp(1.5rem, 3.5vw, 3rem)            /* top */
+    clamp(1.5rem, 4vw, 4rem)             /* right */
+    clamp(1.5rem, 3.5vw, 3rem)            /* bottom */
+    clamp(1.5rem, 4vw, 4rem);            /* left */
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ── TOP NAV LOGO ────────────────────────────────────────── */
+.hero-nav {
+  position: absolute;
+  top: 44px; /* Nudged up slightly */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50; /* Above interaction plane */
+  pointer-events: auto;
+  /* Perspective for 3D tilt */
+  perspective: 600px;
+}
+
+.hero-nav-logo-link {
+  display: block;
+  position: relative;
+  cursor: pointer;
+}
+
+.hero-nav-logo {
+  height: 49px; /* Increased slightly */
+  max-height: 49px;
+  width: auto;
+  image-rendering: auto;
+  display: block;
+}
+
+/* ── CENTRAL BLOCK ─────────────────────────────────────── */
+.hero-central {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* Optical offset: push wordmark slightly above true center */
+  padding-top: clamp(0rem, 2vh, 1.5rem);
+  padding-bottom: clamp(0rem, 2vh, 1rem);
+}
+
+/* ── WORDMARK ──────────────────────────────────────────── */
+.hero-interaction-plane {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 65%; /* Covers wordmark area and metadata on left */
+  height: 100%;
+  z-index: 5;
+  pointer-events: auto;
+  cursor: none;
+}
+
+.hero-wordmark-interactive-wrapper {
+  display: block;
+  width: fit-content;
+  pointer-events: none;
+  /* Generous padding expands interactive hit-test region without layout shifting */
+  padding: clamp(1rem, 2.5vw, 3rem);
+  margin: calc(-1 * clamp(1rem, 2.5vw, 3rem));
+}
+
+.hero-wordmark {
+  /* 
+    Font size is intentionally large: fills ~60% of viewport width.
+    We use a fluid clamp that never gets as tight as the display token,
+    allowing the lines to feel monumental without overflowing on tablet.
+  */
+  font-family: var(--font-heading);
+  font-size: clamp(3.8rem, 9.5vw, 9.5rem);
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 0.92;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+  margin: 0;
+  /* Left-align: the right side of the screen breathes */
+  text-align: left;
+  /* Small negative margin left for optical edge alignment */
+  margin-left: -0.04em;
+  /* Disable inner pointer events; the interactive wrapper box handles everything */
+  pointer-events: none;
+  cursor: none;
+}
+
+
+.hero-wordmark-line {
+  display: block;
+}
+
+/* SHOURYA: brighter, primary weight */
+.hero-line-shourya {
+  font-family: 'Astera Casty', var(--font-heading);
+  color: var(--color-text-primary);
+}
+
+/* // FOUNDRY: slightly muted, indented optically by the slash */
+.hero-line-foundry {
+  font-family: 'Feldora Demo', var(--font-heading);
+  color: rgba(245, 245, 247, 0.62);
+  /* Editorial indent: aligns the F of FOUNDRY under the HO of SHOURYA */
+  padding-left: clamp(1rem, 2.5vw, 2.8rem);
+}
+
+.hero-slash {
+  /* The double-slash is the structural punctuation mark of the brand.
+     Muted so it reads as separator, not additional word. */
+  color: rgba(245, 245, 247, 0.18);
+  margin-right: 0.18em;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+/* ── SUB-ROW (statement + sidebar) ─────────────────────── */
+.hero-sub-row {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(2rem, 6vw, 8rem);
+  margin-top: clamp(1.8rem, 4vw, 3.5rem);
+  pointer-events: auto;
+}
+
+/* Supporting statement: left-aligned, contrasts with the massive headline */
+.hero-statement {
+  font-family: var(--font-body);
+  font-size: clamp(0.82rem, 1.1vw, 1.05rem);
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: 0.005em;
+  color: var(--color-text-secondary);
+  /* Max width keeps lines short (editorial measure) */
+  max-width: 22ch;
+  /* Indent to align with H of SHOURYA (optical) */
+  padding-left: 0.08em;
+  flex-shrink: 0;
+}
+
+/* ── DELETED SIDEBAR AND PREVIEW STRIP ─────────────────── */
+
+/* ── RESPONSIVE: TABLET (< 1024px) ─────────────────────── */
+@media (max-width: 1023px) {
+  .hero-wordmark {
+    font-size: clamp(3.8rem, 9.5vw, 7rem);
+  }
+
+  .hero-nav-logo {
+    height: 43px; /* Tablet scaling (increased slightly) */
+  }
+
+  .hero-sub-row {
+    gap: 2rem;
+  }
+}
+
+/* ── RESPONSIVE: MOBILE (< 640px) ──────────────────────── */
+@media (max-width: 639px) {
+  .hero-root {
+    padding:
+      clamp(1.2rem, 5vw, 2rem)
+      clamp(1.2rem, 5vw, 2rem)
+      clamp(1.2rem, 5vw, 2rem)
+      clamp(1.2rem, 5vw, 2rem);
+  }
+
+  .hero-nav {
+    top: 36px;
+  }
+
+  .hero-nav-logo {
+    height: 35px; /* Mobile scaling (increased slightly) */
+  }
+
+  .hero-wordmark {
+    /* Mobile: still editorial but contained */
+    font-size: clamp(3rem, 13.5vw, 4.5rem);
+    line-height: 0.92;
+    letter-spacing: -0.03em;
+  }
+
+  .hero-line-foundry {
+    padding-left: clamp(0.6rem, 2.5vw, 1.2rem);
+  }
+
+  .hero-sub-row {
+    flex-direction: column;
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+  }
+
+  .hero-statement {
+    max-width: 100%;
+  }
+}
+
+/* ── LAYER 2 INVERSION OVERRIDES ──────────────────────── */
+.hero-root-layer2,
+.hero-root-layer2 * {
+  pointer-events: none !important;
+}
+
+/* Disable entry animations on Layer 2 to guarantee perfect static positioning alignment */
+.hero-root-layer2 .hero-wordmark,
+.hero-root-layer2 .hero-sub-row,
+.hero-root-layer2 .hero-nav-logo-link {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Typography Inversions:
+   • SHOURYA (primary white) becomes deep charcoal stone (#181818)
+   • FOUNDRY (gray text) becomes rich oxblood/burgundy pigment (#701C1C)
+   • // (double slash) becomes a transparent outlined drafting mark */
+.hero-root-layer2 .hero-line-shourya {
+  color: #181818 !important;
+}
+
+.hero-root-layer2 .hero-line-foundry {
+  color: #701C1C !important;
+}
+
+.hero-root-layer2 .hero-slash {
+  color: transparent !important;
+  -webkit-text-stroke: 1.5px #181818 !important;
+}
+
+.hero-root-layer2 .hero-statement {
+  color: #f5f5f7 !important;
+}
+
+.hero-root-layer2 .text-label {
+  color: #f5f5f7 !important;
+}
+
+.hero-root-layer2 .text-caption {
+  color: #f5f5f7 !important;
+}
+
