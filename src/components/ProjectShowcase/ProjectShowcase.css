@@ -1,0 +1,291 @@
+/* ================================================================
+   ProjectShowcase — IPER-style pinned exhibition (Light Grain Edition)
+   ================================================================ */
+
+/* ── Backdrop ──────────────────────────────────────────────────── */
+.sc-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: #f4f2ee;
+  color: #121212;
+  overflow: hidden;
+}
+
+/* Tactile Grain Overlay (Same sand/paper grain texture as Hero) */
+.sc-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.08;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='sand-grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23sand-grain)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+  z-index: 1;
+}
+
+.sc-backdrop--layer2 {
+  background-color: #d86f2a;
+  color: #ffffff;
+}
+
+.sc-backdrop--layer2::after {
+  opacity: 0.12;
+  mix-blend-mode: overlay;
+}
+
+/* Ensure content sits above grain pseudo-element */
+.sc-header,
+.sc-strip-zone,
+.sc-dots {
+  position: absolute;
+  z-index: 2;
+}
+
+/* ── Header block (top ~36% of viewport) ──────────────────────── */
+.sc-header {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 43%;           /* matches the strip-zone top */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 clamp(28px, 4vw, 64px);
+  opacity: 0;            /* faded in by RAF */
+  transition: none;
+}
+
+/* ── Eyebrow row ───────────────────────────────────────────────── */
+.sc-eyebrow-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.sc-eyebrow-label {
+  font-family: 'General Sans', 'Inter', sans-serif;
+  font-size: clamp(11px, 1.2vw, 14px);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #0a0a0c;
+}
+
+.sc-backdrop--layer2 .sc-eyebrow-label {
+  color: rgba(255, 255, 255, 0.90);
+}
+
+.sc-eyebrow-counter {
+  font-family: 'General Sans', 'Inter', sans-serif;
+  font-size: clamp(11px, 1.2vw, 14px);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #0a0a0c;
+}
+
+.sc-backdrop--layer2 .sc-eyebrow-counter {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.sc-counter-num {
+  color: #000000;
+  font-weight: 800;
+}
+
+.sc-backdrop--layer2 .sc-counter-num {
+  color: #ffffff;
+}
+
+/* ── Rules ─────────────────────────────────────────────────────── */
+.sc-rule {
+  width: 100%;
+  height: 1.5px;
+  background: rgba(10, 10, 12, 0.20);
+  margin: 8px 0;
+  flex-shrink: 0;
+}
+
+.sc-backdrop--layer2 .sc-rule {
+  background: rgba(255, 255, 255, 0.30);
+}
+
+/* ── Headline row ───────────────────────────────────────────────── */
+.sc-headline-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 10px 0 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* "SELECTED / WORK" in Athlon Kendich */
+.sc-headline {
+  font-family: 'Athlon Kendich', 'Bebas Neue', 'Impact', sans-serif;
+  font-size: clamp(3.2rem, 7vw, 9rem);
+  font-weight: normal;
+  line-height: 0.93;
+  letter-spacing: 0.02em;
+  color: #0a0a0c;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.sc-backdrop--layer2 .sc-headline {
+  color: #ffffff;
+}
+
+/* Right side badge wrap (contains rotating circular badge + project title) */
+.sc-right-badge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sc-rotating-badge {
+  position: relative;
+  width: clamp(65px, 6vw, 88px);
+  height: clamp(65px, 6vw, 88px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sc-spin-slow 22s linear infinite;
+  will-change: transform;
+}
+
+@keyframes sc-spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.sc-badge-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.sc-badge-text {
+  font-family: 'Athlon Kendich', 'General Sans', sans-serif;
+  font-size: 13.5px;
+  font-weight: normal;
+  letter-spacing: 0.16em;
+  fill: #0a0a0c;
+  text-transform: uppercase;
+}
+
+.sc-backdrop--layer2 .sc-badge-text {
+  fill: #ffffff;
+}
+
+.sc-badge-center-dot {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #D86F2A;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Current project name — right side, also in Athlon Kendich */
+.sc-project-name {
+  font-family: 'Athlon Kendich', 'Bebas Neue', 'Impact', sans-serif;
+  font-size: clamp(1.6rem, 3.2vw, 4.2rem);
+  font-weight: normal;
+  letter-spacing: 0.04em;
+  color: #0a0a0c;
+  text-align: right;
+  align-self: flex-end;
+  padding-bottom: 2px;
+  transition: color 0.4s ease;
+}
+
+.sc-backdrop--layer2 .sc-project-name {
+  color: rgba(255, 255, 255, 0.90);
+}
+
+/* ── Meta row ───────────────────────────────────────────────────── */
+.sc-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0 0;
+}
+
+.sc-meta-category {
+  font-family: 'Athlon Kendich', 'General Sans', 'Inter', sans-serif;
+  font-size: clamp(10px, 1.1vw, 13px);
+  font-weight: normal;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #0a0a0c;
+}
+
+.sc-backdrop--layer2 .sc-meta-category {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.sc-meta-year {
+  font-family: 'Athlon Kendich', 'General Sans', 'Inter', sans-serif;
+  font-size: clamp(12px, 1.3vw, 17px);
+  font-weight: bold;
+  letter-spacing: 0.14em;
+  color: #0a0a0c;
+}
+
+.sc-backdrop--layer2 .sc-meta-year {
+  color: rgba(255, 255, 255, 0.80);
+}
+
+/* ── Subtitle ───────────────────────────────────────────────────── */
+.sc-subtitle {
+  font-family: 'Athlon Kendich', 'General Sans', 'Inter', sans-serif;
+  font-size: clamp(10px, 1vw, 13px);
+  font-weight: normal;
+  letter-spacing: 0.04em;
+  color: rgba(10, 10, 12, 0.85);
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+.sc-backdrop--layer2 .sc-subtitle {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ── Card strip zone (bottom ~55%) ─────────────────────────────── */
+.sc-strip-zone {
+  top: 45%;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  border-top: 1px solid rgba(18, 18, 18, 0.08);
+  overflow: visible;      /* cards overflow clip — handled by RAF layer */
+}
+
+.sc-backdrop--layer2 .sc-strip-zone {
+  border-top-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sc-header {
+    height: 32%;
+    padding: 0 20px;
+  }
+
+  .sc-strip-zone {
+    top: 32%;
+  }
+
+  .sc-headline {
+    font-size: clamp(2.4rem, 9vw, 4.5rem);
+  }
+
+  .sc-project-name {
+    font-size: clamp(1.2rem, 4.5vw, 2.2rem);
+  }
+}

@@ -3,13 +3,15 @@ import { cn } from '../../lib/utils';
 import './ProjectCard.css';
 
 /**
- * ProjectCard — Ultra-Clean Physical Matte Exhibition Board
+ * ProjectCard — Custom Architectural Module with Left Orange Container Bar
  * 
- * Clean visual presentation board with zero text overlays:
- * - Pure screenshot presentation board
- * - Matte charcoal frame & subtle border
+ * Features:
+ * - Left Thin Orange Container (#D86F2A terracotta orange) displaying:
+ *   - Project Number (e.g. 01, 02)
+ *   - Vertical Project Title in heavy condensed font (Bebas Neue / General Sans)
+ *   - Project Year / Tag
+ * - Right Main Container: Screenshot image with slow breathing animation
  * - Soft cursor-following radial illumination
- * - Microscopic slow breathing animation
  */
 export default function ProjectCard({
   project,
@@ -46,6 +48,10 @@ export default function ProjectCard({
     if (onPointerLeave) onPointerLeave(e);
   };
 
+  const projNum = project.number || `0${index + 1}`;
+  const projTitle = project.title || 'PROJECT';
+  const projYear = project.year || '2025';
+
   return (
     <div
       ref={cardRef}
@@ -68,17 +74,25 @@ export default function ProjectCard({
       <div
         className="project-card-cursor-light"
         style={{
-          background: `radial-gradient(400px circle at ${cursorPos.x}px ${cursorPos.y}px, rgba(216, 111, 42, 0.08), transparent 80%)`,
+          background: `radial-gradient(400px circle at ${cursorPos.x}px ${cursorPos.y}px, rgba(255, 255, 255, 0.12), transparent 80%)`,
           opacity: isHovered ? 1 : 0
         }}
         aria-hidden="true"
       />
 
-      {/* Integrated Screenshot Media Wrapper */}
+      {/* ── LEFT THIN ORANGE CONTAINER BAR ── */}
+      <div className="project-card-orange-bar" aria-hidden="true">
+        <span className="project-card-bar-num">{projNum}</span>
+        <div className="project-card-bar-title-wrap">
+          <span className="project-card-bar-title">{projTitle}</span>
+        </div>
+      </div>
+
+      {/* ── RIGHT MAIN SCREENSHOT CONTAINER ── */}
       <div className="project-card-media-wrapper">
         <img
           src={project.image}
-          alt={project.title || 'Project Preview'}
+          alt={projTitle}
           className="project-card-image"
           draggable={false}
         />

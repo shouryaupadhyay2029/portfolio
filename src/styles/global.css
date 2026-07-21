@@ -3,6 +3,37 @@
 @import "./materials.css";
 
 /* =========================================================
+   CUSTOM LOCAL FONTS
+   ========================================================= */
+@font-face {
+  font-family: 'Athlon Kendich';
+  src: url('../assets/fonts/Athlon Kendich.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Athlon Kendich';
+  src: url('../assets/fonts/Athlon Kendich Italic.otf') format('opentype');
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Astera Casty';
+  src: url('../assets/fonts/astera-casty.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Feldora';
+  src: url('../assets/fonts/feldora-demo.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* =========================================================
    GLOBAL BASE STYLES & RESETS
    ========================================================= */
 @layer base {

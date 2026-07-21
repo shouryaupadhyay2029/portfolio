@@ -2,15 +2,42 @@ import React, { useState, useEffect, useRef } from 'react';
 import Lenis from 'lenis';
 import Canvas from '../Canvas/Canvas';
 import Hero from '../Hero/Hero';
-import SelectedWorks from '../WorksScene/SelectedWorks';
-import CaseStudiesScene from '../CaseStudiesScene/CaseStudiesScene';
+import ProjectShowcase from '../ProjectShowcase/ProjectShowcase';
+import ManifestoScene from '../ManifestoScene/ManifestoScene';
 import AboutScene from '../AboutScene/AboutScene';
 import ContactScene from '../ContactScene/ContactScene';
 import ProjectCard from '../WorksScene/ProjectCard';
 import BootSequence from '../BootSequence/BootSequence';
 
-const LERP_POS = 0.40; // hardware pointer polling smoothing
-const LERP_SIZE = 0.20; // snappy clip expansion/contraction
+// ─────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────
+const LERP_POS  = 0.40;
+const LERP_SIZE = 0.20;
+
+// Card lerp speeds
+const LERP_ORBIT      = 0.55;  // Fast — follows orbit directly
+const LERP_TRANSITION = 0.055; // Cinematic — smooth physical motion
+const LERP_PARADE     = 0.07;  // Responsive but silky
+
+// Wheel sensitivity: maps accumulated wheel delta → showcaseProgress (0→1)
+// ~2200px total wheel travel through the full showcase
+const SENSITIVITY = 0.00045;
+
+// showcaseProgress thresholds
+// No expand phase — ALIGN ends directly at strip positions
+const SP_PARADE_END   = 0.92;  // 0 → 0.92: slide through all 5 projects
+const SP_HOLD_END     = 1.00;  // 0.92 → 1.00: hold on final project
+
+// Pre-pin scroll phase thresholds (relative to heroH)
+// Transition begins IMMEDIATELY as soon as user starts scrolling down from Hero
+const SETTLE_START = 0.01;
+const SETTLE_END   = 0.12;
+const ALIGN_START  = 0.12;
+const ALIGN_END    = 0.82; // pin activates smoothly after cards dock in strip
+
+// Scene heights (in units of vh)
+const MANIFESTO_VH = 5;
 
 const projects = [
   {
@@ -60,7 +87,6 @@ const projects = [
   }
 ];
 
-// Orbital sculpture properties (Elliptical orbit, empty center)
 const ORBIT_PHYSICS = [
   { phase: 0 },
   { phase: (2 * Math.PI) / 5 },
@@ -69,575 +95,790 @@ const ORBIT_PHYSICS = [
   { phase: (8 * Math.PI) / 5 }
 ];
 
-export default function RevealLensContainer() {
-  const layer2Ref = useRef(null);
-  const content1Ref = useRef(null);
-  const content2Ref = useRef(null);
-  const heroRef = useRef(null);
-  const wordmarkRect = useRef(null);
+const MANIFESTO_COUNT = 5;
 
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+
+const smoothstep = (lo, hi, v) => {
+  if (Math.abs(hi - lo) < 0.0001) return v >= hi ? 1 : 0;
+  const t = clamp((v - lo) / (hi - lo), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+
+const easeOutCubic = (t) => 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+const easeInOutQuart = (t) => {
+  const c = clamp(t, 0, 1);
+  return c < 0.5 ? 8 * c * c * c * c : 1 - Math.pow(-2 * c + 2, 4) / 2;
+};
+
+const normWheelDelta = (e) => {
+  if (e.deltaMode === 1) return e.deltaY * 16;   // line mode
+  if (e.deltaMode === 2) return e.deltaY * window.innerHeight; // page mode
+  return e.deltaY;
+};
+
+// ─────────────────────────────────────────────────────────────
+export default function RevealLensContainer() {
+
+  // ── Layer & Scene DOM refs ──────────────────────────────────
+  const layer2Ref    = useRef(null);
+  const content1Ref  = useRef(null);
+  const content2Ref  = useRef(null);
+  const heroRef1     = useRef(null);
+  const heroRef2     = useRef(null);
+  const sceneRefs1   = useRef([]);
+  const sceneRefs2   = useRef([]);
+
+  // ── Card DOM refs ───────────────────────────────────────────
   const cardRefs1 = useRef([]);
   const cardRefs2 = useRef([]);
-  const placeholderRefs = useRef([]);
 
-  // Refs for the 5 Environmental Scene Boards
-  const sceneRefs1 = useRef([]);
-  const sceneRefs2 = useRef([]);
-  const sceneHeights = useRef([800, 1200, 1000, 1000, 900]);
-  const sceneOffsets = useRef([0, 800, 2000, 3000, 4000]);
+  // ── Info overlay refs (showcase backdrop) ──────────────────
+  const infoRef1 = useRef({});
+  const infoRef2 = useRef({});
 
-  // Measured placeholder coordinates
-  const placeholderPositions = useRef([]);
-  const [contentHeight, setContentHeight] = useState(4900);
-  const [isScene2Settled, setIsScene2Settled] = useState(false);
-  const isScene2SettledRef = useRef(false);
+  // ── Manifesto DOM refs ──────────────────────────────────────
+  const manifestoRef1 = useRef({ lineEls: [], progressBarEl: null });
+  const manifestoRef2 = useRef({ lineEls: [], progressBarEl: null });
 
-  // Real-time mouse coordinates (in viewport pixels)
-  const targetPos = useRef({ x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 });
-  const currentPos = useRef({ x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 });
+  // ── Scroll & scene metrics ──────────────────────────────────
+  const [contentHeight, setContentHeight] = useState(10000);
+  const sceneHeights = useRef([]);
+  const sceneOffsets = useRef([]);
 
-  // Current animated dimensions of the clipping box
-  const currentSize = useRef({ w: 0, h: 0, r: 0, proximity: 0 });
+  // ── Lenis ref (accessible in wheel handler) ─────────────────
+  const lenisRef = useRef(null);
 
-  // Smooth scroll tracking
-  const scrollY = useRef(0);
+  // ── Pin state ───────────────────────────────────────────────
+  const isPinned       = useRef(false);
+  const pinReleased    = useRef(false);  // showcase was completed, don't re-pin
+  const pinCooldown    = useRef(false);  // temporary cooldown after unpinning backward
+  const pinnedScrollY  = useRef(0);
+  const showcaseProgress = useRef(0);   // 0→1 drives PARADE
+
+  // ── Magnetic Latch System ──────────────────────────────────
+  const magnetUpPull   = useRef(0);      // accumulated upward pull delta (at PlacePro)
+  const magnetDownPull = useRef(0);      // accumulated downward pull delta (at NexEvent)
+  const magnetOffset   = useRef(0);      // visual elastic tension displacement (px)
+
+  // ── Mouse / scroll tracking ─────────────────────────────────
+  const scrollY        = useRef(0);
   const scrollVelocity = useRef(0);
   const smoothVelocity = useRef(0);
-  const animTime = useRef(0);
+  const targetPos      = useRef({ x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 });
+  const currentPos     = useRef({ x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 });
+  const currentSize    = useRef({ w: 0, h: 0, r: 0, proximity: 0 });
+
+  // ── Orbital animation ───────────────────────────────────────
+  const animTime     = useRef(0);
   const currentSpeed = useRef(1.0);
-  const hoveredIndexRef = useRef(null);
+  const hoveredIdx   = useRef(null);
+  const imagesReady  = useRef(true);
 
-  // Image preload state
-  const imagesReady = useRef(false);
+  // ── Viewport cache ──────────────────────────────────────────
+  const vp = useRef({
+    w: typeof window !== 'undefined' ? window.innerWidth  : 1200,
+    h: typeof window !== 'undefined' ? window.innerHeight : 800
+  });
 
-  // Cache window dimensions to prevent synchronous layout thrashing
-  const viewportParams = useRef({ w: typeof window !== 'undefined' ? window.innerWidth : 1200, h: typeof window !== 'undefined' ? window.innerHeight : 800 });
-
-  // Initialize visual states for cards
-  const cardVisualStates = useRef(
-    ORBIT_PHYSICS.map(() => {
-      const cx = viewportParams.current.w * 0.70;
-      const cy = viewportParams.current.h * 0.50;
-      return {
-        x: cx,
-        y: cy,
-        w: 240, // 16:10 Landscape width
-        h: 150, // 16:10 Landscape height
-        scale: 1.0,
-        opacity: 0, // Start hidden to fade in smoothly
-        blur: 0,
-        zIndex: 10
-      };
-    })
+  // ── Per-card smooth state (lerped every frame) ─────────────
+  const cardStates = useRef(
+    projects.map(() => ({
+      x: vp.current.w * 0.70,
+      y: vp.current.h * 0.50,
+      w: 240, h: 150,
+      opacity: 0, scale: 1.0, blur: 0, zIndex: 10,
+      hoverDepth: 0,
+    }))
   );
 
-  // Cache placeholder & scene board coordinates
-  const measurePlaceholders = () => {
-    viewportParams.current.w = window.innerWidth;
-    viewportParams.current.h = window.innerHeight;
+  // Frozen orbital positions captured when orbit decelerates
+  const frozenOrbit = useRef(projects.map(() => ({ x: 0, y: 0 })));
+  const orbitFrozen = useRef(false); // flag: freeze positions taken?
 
-    if (!content1Ref.current) return;
-    const parentRect = content1Ref.current.getBoundingClientRect();
+  // ── Scene measurement ───────────────────────────────────────
+  const measureScenes = () => {
+    vp.current.w = window.innerWidth;
+    vp.current.h = window.innerHeight;
+    const vh = window.innerHeight;
 
-    if (heroRef.current && heroRef.current.wordmark) {
-      const heroRect = heroRef.current.wordmark.getBoundingClientRect();
-      wordmarkRect.current = {
-        left: heroRect.left,
-        top: heroRect.top,
-        right: heroRect.right,
-        bottom: heroRect.bottom,
-        width: heroRect.width,
-        height: heroRect.height
-      };
-    }
+    // Scene 02 is just 1×vh — the showcase lives OUTSIDE scroll via pin
+    const h0 = vh;
+    const h1 = vh;               // Scene 02 backdrop: 1 viewport
+    const h2 = vh * MANIFESTO_VH;
+    const h3 = vh;
+    const h4 = vh;
 
-    // Measure Project Card Placeholders
-    const newPositions = placeholderRefs.current.map((placeholder) => {
-      if (!placeholder) return null;
-      const rect = placeholder.getBoundingClientRect();
-      return {
-        x: rect.left - parentRect.left,
-        y: rect.top - parentRect.top,
-        w: rect.width,
-        h: rect.height
-      };
-    });
+    sceneHeights.current = [h0, h1, h2, h3, h4];
 
-    if (newPositions.every(pos => pos !== null && pos.w > 0)) {
-      placeholderPositions.current = newPositions;
-    }
-
-    // Measure Scene Board Heights & Offsets
-    const heroH = window.innerHeight;
-    sceneHeights.current[0] = heroH;
-
-    let accumulatedOffset = heroH;
-    const newHeights = [heroH];
-    const newOffsets = [0, heroH];
-
-    sceneRefs1.current.forEach((sceneEl, i) => {
-      if (i > 0 && sceneEl) {
-        const h = sceneEl.offsetHeight || 1000;
-        newHeights[i] = h;
-        accumulatedOffset += h;
-        newOffsets[i + 1] = accumulatedOffset;
-      }
-    });
-
-    if (newHeights.length >= 2) {
-      sceneHeights.current = newHeights;
-      sceneOffsets.current = newOffsets;
-      setContentHeight(accumulatedOffset + 200);
-    }
+    let off = 0;
+    const offsets = [0];
+    [h0, h1, h2, h3, h4].forEach(h => { off += h; offsets.push(off); });
+    sceneOffsets.current = offsets;
+    setContentHeight(off + 300);
   };
 
   useEffect(() => {
-    // 0. Preload Project Images
-    let loadedCount = 0;
-    projects.forEach((p) => {
+    // ── Image preload ─────────────────────────────────────────
+    let loaded = 0;
+    projects.forEach(p => {
       const img = new window.Image();
-      img.onload = () => {
-        loadedCount++;
-        if (loadedCount === projects.length) imagesReady.current = true;
-      };
-      img.onerror = () => {
-        loadedCount++;
-        if (loadedCount === projects.length) imagesReady.current = true;
+      img.onload = img.onerror = () => {
+        loaded++;
+        if (loaded === projects.length) imagesReady.current = true;
       };
       img.src = p.image;
     });
 
-    // 1. Initialize Lenis Smooth Scroll (Instant & Responsive Tuning)
+    // ── Lenis smooth scroll ───────────────────────────────────
     const lenis = new Lenis({
       duration: 0.45,
-      easing: (t) => 1 - Math.pow(1 - t, 3), // Instant cubic ease out for immediate response
+      easing: (t) => 1 - Math.pow(1 - t, 3),
       syncTouch: true,
       wheelMultiplier: 1.0,
       touchMultiplier: 1.5,
     });
-
-    lenis.on('scroll', (e) => {
+    lenisRef.current = lenis;
+    lenis.on('scroll', e => {
       scrollY.current = e.scroll;
       scrollVelocity.current = e.velocity || 0;
     });
 
-    // 2. Mouse Move Tracking
-    const onMouseMove = (e) => {
+    // ── Mouse tracking ────────────────────────────────────────
+    const onMouseMove = e => {
       targetPos.current.x = e.clientX;
       targetPos.current.y = e.clientY;
     };
-
     window.addEventListener('mousemove', onMouseMove, { passive: true });
-    window.addEventListener('resize', measurePlaceholders);
+    window.addEventListener('resize', measureScenes);
 
-    // Trigger initial placeholder & scene measurement after short render delay
-    const initialMeasureTimeout = setTimeout(measurePlaceholders, 150);
+    // ── Wheel interceptor (CAPTURE phase → runs before Lenis) ─
+    const MAGNET_THRESHOLD = 300; // 2-3 deliberate wheel inputs required to un-latch at boundaries
 
-    // 3. Unified Animation Game Loop
-    let mainRafId = null;
-    let lastTime = performance.now();
+    const onWheel = (e) => {
+      if (!isPinned.current) return;
 
-    const tick = (now) => {
-      lenis.raf(now); // Unified Lenis tick
+      // Block all browser scroll during pin
+      e.preventDefault();
+      e.stopPropagation();
 
-      const el = layer2Ref.current;
-      if (!el) {
-        mainRafId = requestAnimationFrame(tick);
+      const delta = normWheelDelta(e);
+
+      // ── 1. AT START (PlacePro, showcaseProgress <= 0.005) ──
+      // Scrolling UP holds position rock-solid stable for 2-3 scroll inputs before moving up to Hero
+      if (showcaseProgress.current <= 0.005 && delta < 0) {
+        magnetDownPull.current = 0;
+        magnetUpPull.current += Math.abs(delta);
+        magnetOffset.current = 0;
+
+        if (magnetUpPull.current >= MAGNET_THRESHOLD) {
+          // Latch breaks → release pin backward to Hero smoothly
+          pinCooldown.current = true;
+          isPinned.current = false;
+          magnetUpPull.current = 0;
+          magnetOffset.current = 0;
+          showcaseProgress.current = 0;
+          lenis.start();
+          lenis.scrollTo(0, {
+            duration: 0.95,
+            easing: t => 1 - Math.pow(1 - t, 3)
+          });
+          setTimeout(() => {
+            pinCooldown.current = false;
+          }, 1000);
+        }
         return;
       }
 
-      // Delta time calculation for frame-rate independence
+      // ── 2. AT END (NexEvent, showcaseProgress >= 0.995) ──
+      // Scrolling DOWN holds position rock-solid stable for 2-3 scroll inputs before moving to Section 3
+      if (showcaseProgress.current >= 0.995 && delta > 0) {
+        magnetUpPull.current = 0;
+        magnetDownPull.current += Math.abs(delta);
+        magnetOffset.current = 0;
+
+        if (magnetDownPull.current >= MAGNET_THRESHOLD) {
+          // Latch breaks → advance to Section 3 (Manifesto)
+          isPinned.current = false;
+          pinReleased.current = true;
+          magnetDownPull.current = 0;
+          magnetOffset.current = 0;
+          lenis.start();
+          const offsets = sceneOffsets.current;
+          lenis.scrollTo(offsets[2], {
+            duration: 1.1,
+            easing: t => 1 - Math.pow(1 - t, 3)
+          });
+        }
+        return;
+      }
+
+      // ── 3. IN BETWEEN: Normal Horizontal Showcase Progression ──
+      magnetUpPull.current = 0;
+      magnetDownPull.current = 0;
+      magnetOffset.current = 0;
+      const next = showcaseProgress.current + delta * SENSITIVITY;
+      showcaseProgress.current = clamp(next, 0, 1.0);
+    };
+
+    // ── Touch support for mobile ──────────────────────────────
+    let lastTouchY = 0;
+    const onTouchStart = (e) => {
+      if (!isPinned.current) return;
+      lastTouchY = e.touches[0].clientY;
+    };
+    const onTouchMove = (e) => {
+      if (!isPinned.current) return;
+      e.preventDefault();
+      const dy = lastTouchY - e.touches[0].clientY; // + = scroll down, - = scroll up
+      lastTouchY = e.touches[0].clientY;
+
+      if (showcaseProgress.current <= 0.005 && dy < 0) {
+        magnetUpPull.current += Math.abs(dy);
+        magnetOffset.current = 0;
+        if (magnetUpPull.current >= MAGNET_THRESHOLD) {
+          pinCooldown.current = true;
+          isPinned.current = false;
+          magnetUpPull.current = 0;
+          magnetOffset.current = 0;
+          showcaseProgress.current = 0;
+          lenis.start();
+          lenis.scrollTo(0, {
+            duration: 0.95,
+            easing: t => 1 - Math.pow(1 - t, 3)
+          });
+          setTimeout(() => {
+            pinCooldown.current = false;
+          }, 1000);
+        }
+        return;
+      }
+
+      if (showcaseProgress.current >= 0.995 && dy > 0) {
+        magnetDownPull.current += Math.abs(dy);
+        magnetOffset.current = 0;
+        if (magnetDownPull.current >= MAGNET_THRESHOLD) {
+          isPinned.current = false;
+          pinReleased.current = true;
+          magnetDownPull.current = 0;
+          magnetOffset.current = 0;
+          lenis.start();
+          const offsets = sceneOffsets.current;
+          lenis.scrollTo(offsets[2], {
+            duration: 1.1,
+            easing: t => 1 - Math.pow(1 - t, 3)
+          });
+        }
+        return;
+      }
+
+      magnetUpPull.current = 0;
+      magnetDownPull.current = 0;
+      magnetOffset.current = 0;
+      showcaseProgress.current = clamp(
+        showcaseProgress.current + dy * SENSITIVITY * 1.8,
+        0, 1.0
+      );
+    };
+
+    window.addEventListener('wheel',      onWheel,      { passive: false, capture: true });
+    window.addEventListener('touchstart', onTouchStart, { passive: false, capture: true });
+    window.addEventListener('touchmove',  onTouchMove,  { passive: false, capture: true });
+
+    const initTimeout = setTimeout(measureScenes, 150);
+
+    // ─────────────────────────────────────────────────────────
+    // UNIFIED RAF GAME LOOP
+    // ─────────────────────────────────────────────────────────
+    let rafId = null;
+    let lastTime = performance.now();
+    let lastActiveIdx = -1;
+
+    const tick = (now) => {
+      lenis.raf(now);
+
+      const layer2El = layer2Ref.current;
+      if (!layer2El) { rafId = requestAnimationFrame(tick); return; }
+
       const dt = Math.min((now - lastTime) * 0.001, 0.1);
       lastTime = now;
 
-      // ────────────────────────────────────────────────────────
-      // A. MOUSE CURSOR & LENS CLIPPING
-      // ────────────────────────────────────────────────────────
+      const rawScroll = scrollY.current;
+      const w = vp.current.w;
+      const h = vp.current.h;
+      const heights = sceneHeights.current;
+      const offsets = sceneOffsets.current;
+      const heroH = heights[0] || h;
+
+      // ── B: LOCK PAGE WHILE PINNED ──────────────────────────
+      if (isPinned.current) {
+        window.scrollTo(0, pinnedScrollY.current);
+      }
+
+      // Effective scroll used for scene physics
+      const sv = isPinned.current ? pinnedScrollY.current : rawScroll;
+
+      // ── A: REVEAL LENS — only near SHOURYA // FOUNDRY ─────
       currentPos.current.x += (targetPos.current.x - currentPos.current.x) * LERP_POS;
       currentPos.current.y += (targetPos.current.y - currentPos.current.y) * LERP_POS;
 
-      let targetProximityScale = 0;
-      if (wordmarkRect.current) {
-        const padding = 100;
-        const fadeDist = 150;
-        const rect = wordmarkRect.current;
-        const minX = rect.left - padding;
-        const maxX = rect.right + padding;
-        const minY = rect.top - padding;
-        const maxY = rect.bottom + padding;
-
-        const cx = currentPos.current.x;
-        const cy = currentPos.current.y;
-
-        let dx = 0; let dy = 0;
-        if (cx < minX) dx = minX - cx;
-        else if (cx > maxX) dx = cx - maxX;
-
-        if (cy < minY) dy = minY - cy;
-        else if (cy > maxY) dy = cy - maxY;
-
+      let targetProx = 0;
+      if (rawScroll < 30 && heroRef1.current && heroRef1.current.wordmark) {
+        const rect = heroRef1.current.wordmark.getBoundingClientRect();
+        const pad = 40, fade = 100;
+        const cx = currentPos.current.x, cy = currentPos.current.y;
+        let dx = 0, dy = 0;
+        if (cx < rect.left - pad)  dx = (rect.left - pad) - cx;
+        else if (cx > rect.right + pad) dx = cx - (rect.right + pad);
+        if (cy < rect.top - pad)   dy = (rect.top - pad) - cy;
+        else if (cy > rect.bottom + pad) dy = cy - (rect.bottom + pad);
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist === 0) targetProximityScale = 1.0;
-        else if (dist < fadeDist) targetProximityScale = 1.0 - (dist / fadeDist);
+        targetProx = dist === 0 ? 1 : dist < fade ? 1 - dist / fade : 0;
       }
 
-      currentSize.current.proximity += (targetProximityScale - currentSize.current.proximity) * 0.15;
-      const p = currentSize.current.proximity;
+      currentSize.current.proximity += (targetProx - currentSize.current.proximity) * 0.15;
+      const lp = currentSize.current.proximity;
+      let tW = 0, tH = 0, tR = 26;
+      if (lp > 0.01) {
+        const ts = now * 0.001;
+        tW = 75 + Math.sin(ts * (2 * Math.PI / 9)) * 6;
+        tH = 65 + Math.cos(ts * (2 * Math.PI / 11)) * 6;
+        tR = 18 + Math.sin(ts * (2 * Math.PI / 10)) * 4;
+      }
+      currentSize.current.w += (tW - currentSize.current.w) * LERP_SIZE;
+      currentSize.current.h += (tH - currentSize.current.h) * LERP_SIZE;
+      if (!currentSize.current.r) currentSize.current.r = 0;
+      currentSize.current.r += (tR - currentSize.current.r) * LERP_SIZE;
 
-      let targetW = 0; let targetH = 0; let targetR = 26;
-
-      if (p > 0.01) {
-        const timeSec = now * 0.001;
-        const widthMod = Math.sin(timeSec * (2 * Math.PI / 9.0));
-        const heightMod = Math.cos(timeSec * (2 * Math.PI / 11.0));
-        const radiusMod = Math.sin(timeSec * (2 * Math.PI / 10.0));
-        targetW = 75 + widthMod * 6;
-        targetH = 65 + heightMod * 6;
-        targetR = 18 + radiusMod * 4;
+      const lw = currentSize.current.w * lp, lh = currentSize.current.h * lp;
+      if (lw > 0.01 && lh > 0.01) {
+        const lcx = currentPos.current.x, lcy = currentPos.current.y;
+        const rr = (currentSize.current.w / 120) * currentSize.current.r * lp;
+        const clip = `inset(${lcy - lh / 2}px ${w - lcx - lw / 2}px ${h - lcy - lh / 2}px ${lcx - lw / 2}px round ${rr}px)`;
+        const op = lp.toFixed(3);
+        if (layer2El._lc !== clip)   { layer2El.style.clipPath = clip; layer2El._lc = clip; }
+        if (layer2El._lo !== op)     { layer2El.style.opacity = op;   layer2El._lo = op; }
+        if (layer2El._ld !== 'block') { layer2El.style.display = 'block'; layer2El._ld = 'block'; }
+      } else if (layer2El._ld !== 'none') {
+        layer2El.style.clipPath = 'inset(100% 100% 100% 100%)';
+        layer2El.style.opacity  = '0';
+        layer2El.style.display  = 'none';
+        layer2El._lc = 'none'; layer2El._ld = 'none';
       }
 
-      currentSize.current.w += (targetW - currentSize.current.w) * LERP_SIZE;
-      currentSize.current.h += (targetH - currentSize.current.h) * LERP_SIZE;
-      if (currentSize.current.r === undefined) currentSize.current.r = 0;
-      currentSize.current.r += (targetR - currentSize.current.r) * LERP_SIZE;
+      // ── C: SCENE STACKING PHYSICS ──────────────────────────
+      if (heights.length >= 5 && offsets.length >= 6) {
+        const recessP = clamp(sv / heroH, 0, 1);
+        const heroScale = 1.0 - 0.04 * recessP;
+        [sceneRefs1.current[0], sceneRefs2.current[0]].forEach(s => {
+          if (s) s.style.transform = `translate3d(0, 0, 0) scale(${heroScale.toFixed(4)})`;
+        });
 
-      const w = currentSize.current.w * p;
-      const h = currentSize.current.h * p;
-
-      if (w > 0.01 && h > 0.01) {
-        const cx = currentPos.current.x;
-        const cy = currentPos.current.y;
-
-        const finalTop = cy - h / 2;
-        const finalLeft = cx - w / 2;
-        const finalBottom = viewportParams.current.h - (cy + h / 2);
-        const finalRight = viewportParams.current.w - (cx + w / 2);
-        const finalR = (currentSize.current.w / 120) * currentSize.current.r * p;
-
-        const newClip = `inset(${finalTop}px ${finalRight}px ${finalBottom}px ${finalLeft}px round ${finalR}px)`;
-        const newOpacity = p.toFixed(3);
-
-        if (el._lastClip !== newClip) {
-          el.style.clipPath = newClip;
-          el._lastClip = newClip;
-        }
-        if (el._lastOpacity !== newOpacity) {
-          el.style.opacity = newOpacity;
-          el._lastOpacity = newOpacity;
-        }
-        if (el._lastDisplay !== 'block') {
-          el.style.display = 'block';
-          el._lastDisplay = 'block';
-        }
-      } else {
-        const newClip = 'inset(100% 100% 100% 100%)';
-        if (el._lastClip !== newClip) {
-          el.style.clipPath = newClip;
-          el.style.opacity = '0';
-          el.style.display = 'none';
-          el._lastClip = newClip;
-          el._lastOpacity = '0';
-          el._lastDisplay = 'none';
-        }
+        [[1, 1], [2, 2], [3, 3], [4, 4]].forEach(([si, oi]) => {
+          const offV = offsets[oi];
+          const yV = sv < offV ? offV - sv : -(sv - offV);
+          [sceneRefs1.current[si], sceneRefs2.current[si]].forEach(s => {
+            if (s) s.style.transform = `translate3d(0, ${yV.toFixed(1)}px, 0)`;
+          });
+        });
       }
 
-      // ────────────────────────────────────────────────────────
-      // B. PAGE SCROLL & LAYERED SCENE BOARD PHYSICS
-      // Hero (Scene 01) remains stationary at top: 0!
-      // Scene 02, 03, 04, 05 slide UP as stacked layers over Hero!
-      // ────────────────────────────────────────────────────────
-      const scrollVal = scrollY.current;
-      smoothVelocity.current += (scrollVelocity.current - smoothVelocity.current) * 0.1;
-      const heroH = window.innerHeight;
+      // ── D: PIN ACTIVATION ──────────────────────────────────
+      const alignP_forPin = smoothstep(heroH * ALIGN_START, heroH * ALIGN_END, rawScroll);
+      const canPin = !isPinned.current && !pinReleased.current && !pinCooldown.current;
+      const shouldPin = canPin && alignP_forPin >= 0.94 && rawScroll >= heroH * 0.88;
 
-      // 1. Scene 01 (Hero) stays stationary at top: 0 with subtle scaling recession
-      const heroRecessP = Math.min(1, Math.max(0, scrollVal / heroH));
-      const heroScale = 1.0 - 0.04 * heroRecessP;
-
-      [sceneRefs1.current[0], sceneRefs2.current[0]].forEach((sceneEl) => {
-        if (sceneEl) {
-          sceneEl.style.transform = `translate3d(0, 0, 0) scale(${heroScale.toFixed(4)})`;
-        }
-      });
-
-      // 2. Scene 02 (Selected Work): Slides UP over Hero from bottom (100vh -> 0px)
-      const h1 = sceneHeights.current[1] || 1200;
-      const scene1Y = scrollVal < heroH ? (heroH - scrollVal) : -(scrollVal - heroH);
-
-      [sceneRefs1.current[1], sceneRefs2.current[1]].forEach((sceneEl) => {
-        if (sceneEl) {
-          sceneEl.style.transform = `translate3d(0, ${scene1Y.toFixed(1)}px, 0)`;
-        }
-      });
-
-      // 3. Scene 03 (Case Studies): Slides UP over Scene 02
-      const h2 = sceneHeights.current[2] || 1000;
-      const offset2 = heroH + h1;
-      const scene2Y = scrollVal < offset2 ? (offset2 - scrollVal) : -(scrollVal - offset2);
-
-      [sceneRefs1.current[2], sceneRefs2.current[2]].forEach((sceneEl) => {
-        if (sceneEl) {
-          sceneEl.style.transform = `translate3d(0, ${scene2Y.toFixed(1)}px, 0)`;
-        }
-      });
-
-      // 4. Scene 04 (About): Slides UP over Scene 03
-      const h3 = sceneHeights.current[3] || 1000;
-      const offset3 = offset2 + h2;
-      const scene3Y = scrollVal < offset3 ? (offset3 - scrollVal) : -(scrollVal - offset3);
-
-      [sceneRefs1.current[3], sceneRefs2.current[3]].forEach((sceneEl) => {
-        if (sceneEl) {
-          sceneEl.style.transform = `translate3d(0, ${scene3Y.toFixed(1)}px, 0)`;
-        }
-      });
-
-      // 5. Scene 05 (Contact): Slides UP over Scene 04
-      const offset4 = offset3 + h3;
-      const scene4Y = scrollVal < offset4 ? (offset4 - scrollVal) : -(scrollVal - offset4);
-
-      [sceneRefs1.current[4], sceneRefs2.current[4]].forEach((sceneEl) => {
-        if (sceneEl) {
-          sceneEl.style.transform = `translate3d(0, ${scene4Y.toFixed(1)}px, 0)`;
-        }
-      });
-
-      // B3. Selected Work Scene Settlement State Trigger
-      const isSettledNow = scrollVal >= heroH - window.innerHeight * 0.45;
-      if (isSettledNow !== isScene2SettledRef.current) {
-        isScene2SettledRef.current = isSettledNow;
-        setIsScene2Settled(isSettledNow);
+      if (shouldPin) {
+        isPinned.current = true;
+        pinnedScrollY.current = heroH; // lock at Scene 02 fully covering Hero
+        showcaseProgress.current = 0;
+        window.scrollTo(0, heroH);
+        lenis.stop();
       }
 
-      // ────────────────────────────────────────────────────────
-      // C. DRIFT TIME FACTOR & DRIFT LAUNCH
-      // ────────────────────────────────────────────────────────
+      // Reset pin eligibility after scrolling well back into Hero
+      if ((pinReleased.current || pinCooldown.current) && rawScroll < heroH * 0.25) {
+        pinReleased.current = false;
+        pinCooldown.current = false;
+        showcaseProgress.current = 0;
+      }
+
+      // ── E: MANIFESTO SCROLL DRIVE ──────────────────────────
+      if (heights.length >= 3 && offsets.length >= 4) {
+        const mStart = offsets[2], mRange = heights[2] || (h * MANIFESTO_VH);
+        const mP = clamp((sv - mStart) / mRange, 0, 1);
+        const mActiveIdx = Math.round(mP * (MANIFESTO_COUNT - 1));
+        [manifestoRef1.current, manifestoRef2.current].forEach(mr => {
+          if (!mr?.lineEls?.length) return;
+          mr.lineEls.forEach((el, i) => {
+            if (!el) return;
+            el.classList.toggle('is-active', i === mActiveIdx);
+            el.classList.toggle('is-past',   i < mActiveIdx);
+          });
+          if (mr.progressBarEl) mr.progressBarEl.style.height = `${(mP * 100).toFixed(1)}%`;
+        });
+      }
+
+      // ── F: ORBITAL ANIMATION TIME ──────────────────────────
       if (imagesReady.current) {
-        const targetSpeed = hoveredIndexRef.current !== null ? 0.0 : 1.0;
-        currentSpeed.current += (targetSpeed - currentSpeed.current) * 0.08;
+        // Speed decreases as settle phase begins
+        const settleP = smoothstep(heroH * SETTLE_START, heroH * SETTLE_END, rawScroll);
+        const orbitTarget = hoveredIdx.current !== null ? 0 : clamp(1 - settleP * 1.4, 0, 1);
+        currentSpeed.current += (orbitTarget - currentSpeed.current) * 0.04;
         animTime.current += dt * currentSpeed.current;
       }
 
-      // Lazy measurement backup
-      if (placeholderPositions.current.length === 0 || sceneHeights.current[0] === 800) {
-        measurePlaceholders();
-      }
+      // ── G: CARD STATE MACHINE ──────────────────────────────
+      smoothVelocity.current += (scrollVelocity.current - smoothVelocity.current) * 0.1;
 
-      // ────────────────────────────────────────────────────────
-      // D. PROJECT CARDS LAYOUT, VIEWPORT FOCUS & PHYSICS INJECTION
-      // ────────────────────────────────────────────────────────
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      const scrollProgress = Math.min(Math.max(scrollVal / (height * 0.95), 0), 1);
-      const smoothP = scrollProgress * scrollProgress * (3 - 2 * scrollProgress); // Smoothstep
-
-      // Base sculpture center (Empty middle) and Ellipse Radii
-      let cx = 0;
-      let cy = 0;
-      let RX = 0;
-      let RY = 0;
-
-      if (width >= 1024) {
-        cx = width * 0.70;
-        cy = height * 0.50;
-        RX = width * 0.175;
-        RY = RX * 0.60;
-      } else if (width >= 768) {
-        cx = width * 0.68;
-        cy = height * 0.50;
-        RX = width * 0.22;
-        RY = RX * 0.60;
-      } else {
-        cx = width * 0.5;
-        cy = height * 0.70;
-        RX = width * 0.32;
-        RY = RX * 0.55;
-      }
-
-      // Global rotation (1 rev every 100 sec)
+      // Orbit ellipse
+      let oCx = w * 0.70, oCy = h * 0.65, oRX = w * 0.175;
+      if (w >= 1024)      { oCx = w * 0.70; oCy = h * 0.65; oRX = w * 0.175; }
+      else if (w >= 768)  { oCx = w * 0.68; oCy = h * 0.65; oRX = w * 0.22; }
+      else                { oCx = w * 0.50; oCy = h * 0.78; oRX = w * 0.32; }
+      const oRY = oRX * 0.60;
       const globalAngle = (animTime.current / 100) * Math.PI * 2;
 
-      const isAnyHovered = hoveredIndexRef.current !== null;
-      const viewportCenterY = height / 2;
+      // Pre-pin scroll phases
+      const settleP = smoothstep(heroH * SETTLE_START, heroH * SETTLE_END, rawScroll);
+      const alignP  = smoothstep(heroH * ALIGN_START,  heroH * ALIGN_END,  rawScroll);
 
-      projects.forEach((_, idx) => {
-        const phys = ORBIT_PHYSICS[idx];
-        const state = cardVisualStates.current[idx];
+      // Post-pin showcase phases
+      // ── IPER Strip geometry ─────────────────────────────────────
+      // Cards live in lower half of viewport (top 45% -> 94%), leaving generous breathing room below header
+      const stripTop  = h * 0.45;                          // shifted down from 0.36 to 0.45 for spacious layout
+      const stripH    = h * 0.49;                          // card height fills down to 94% vh
+      const cardW     = clamp(w * 0.52, 380, 780);         // increased card length/width for cinematic presence!
+      const cardH     = stripH;                             // fills strip height
+      const cardGap   = clamp(w * 0.025, 14, 32);          // gap between cards
+      const trackLeft = clamp(w * 0.04, 24, 64);           // left & right margin padding
 
-        // 1. Orbital position
-        const theta = globalAngle + phys.phase;
+      // Exact mathematical calculation so the last card stops with clean right margin (trackLeft) from screen edge
+      const totalTrackSpan = (projects.length - 1) * (cardW + cardGap);
+      const availableSpan  = Math.max(1, w - 2 * trackLeft - cardW);
+      const maxScrollDist  = Math.max(0, totalTrackSpan - availableSpan);
+      const maxActiveF     = maxScrollDist / (cardW + cardGap);
 
-        const dx = Math.cos(theta) * RX;
-        const dy = Math.sin(theta) * RY;
+      // Post-pin showcase phases
+      const sp = showcaseProgress.current;
+      const paradeRaw = clamp(sp / Math.max(0.001, SP_PARADE_END), 0, 1);
+      const activeF   = paradeRaw * maxActiveF;
 
+      // Active project index for header info (0 -> 4)
+      const activeIdx = Math.min(
+        projects.length - 1,
+        Math.floor(paradeRaw * projects.length)
+      );
+
+      // ── Magnetic Elastic Decay ──────────────────────────────────
+      magnetUpPull.current   *= 0.88;
+      magnetDownPull.current *= 0.88;
+      magnetOffset.current   += (0 - magnetOffset.current) * 0.14;
+
+      // Strip card position for index idx at current activeF
+      // = slide the track left as activeF increases + magnetic elastic displacement
+      const stripX = (idx) => trackLeft + (idx - activeF) * (cardW + cardGap);
+      const stripY = stripTop + magnetOffset.current;
+
+      // Orbit sculpture size (unchanged)
+      const sculptW = w >= 768 ? 242 : 200;
+      const sculptH = sculptW * 0.625;
+
+      // Pre-pin align row (small) — cards gather in lower area before pin
+      // Target the strip positions but slightly smaller for smooth grow-in
+      const preW = clamp(w * 0.135, 130, 200);
+      const preH = preW * 0.625;
+      const preGap = cardW + cardGap;
+      const preTotalW = (projects.length - 1) * preGap;
+      const preStartX = w / 2 - preTotalW / 2 + (0 - activeF) * preGap;
+      const preAlignX = (idx) => trackLeft + idx * (cardW + cardGap);
+      const preAlignY = stripTop + stripH / 2 - preH / 2;
+
+      // Post-showcase fade (after pin released, cards disappear as Scene 03 rises)
+      const postFade = pinReleased.current
+        ? clamp((sv - offsets[1]) / (heroH * 0.6), 0, 1)
+        : 0;
+
+      projects.forEach((proj, idx) => {
+        const phys  = ORBIT_PHYSICS[idx];
+        const state = cardStates.current[idx];
+
+        // ── Orbital physics ───────────────────────────────────
+        const theta       = globalAngle + phys.phase;
         const depthFactor = (Math.sin(theta) + 1) / 2;
+        const orbitX      = oCx + Math.cos(theta) * oRX - sculptW / 2;
+        const orbitY      = oCy + Math.sin(theta) * oRY - sculptH / 2;
 
-        const xs_final = cx + dx * (1 - smoothP);
-        const ys_final = cy + dy * (1 - smoothP);
+        // Capture frozen positions just before align begins
+        if (!orbitFrozen.current && settleP > 0.02) {
+          // Will be captured per-card below
+        }
+        if (settleP < 0.05) {
+          frozenOrbit.current[idx].x = orbitX;
+          frozenOrbit.current[idx].y = orbitY;
+          orbitFrozen.current = false;
+        } else {
+          orbitFrozen.current = true;
+        }
+        const frzX = frozenOrbit.current[idx].x;
+        const frzY = frozenOrbit.current[idx].y;
 
-        // 3. Grid placeholder position
-        const pos = placeholderPositions.current[idx] || { x: xs_final, y: ys_final, w: 320, h: 220 };
+        const offsetFromActive = idx - activeF;
+        const absOff = Math.abs(offsetFromActive);
 
-        // 5. Staggered Entrance & Interpolation between Sculpture (Hero) and Exhibition (Gallery) states
-        const staggerStart = idx * 0.10;
-        const cardP = Math.min(Math.max((smoothP - staggerStart) / Math.max(0.01, 1.0 - staggerStart), 0), 1);
-        const cardEase = cardP * cardP * (3 - 2 * cardP); // Smoothstep curve
+        // ── Decide target state by phase ─────────────────────
+        let tX, tY, tW, tH, tOp, tBlur, tScale, tZ;
+        let lerpSpeed = LERP_ORBIT;
 
-        const targetX = xs_final + (pos.x - xs_final) * cardEase;
-        const targetY = ys_final + (pos.y - ys_final) * cardEase;
+        const inPinPhase   = isPinned.current || pinReleased.current;
+        const isOrbitPhase  = !inPinPhase && settleP < 0.05;
+        const isSettlePhase = !inPinPhase && settleP >= 0.05 && alignP < 0.02;
+        const isAlignPhase  = !inPinPhase && alignP >= 0.02;
+        const isParadePhase = inPinPhase;
 
-        // Landscape presentation boards
-        const sculptureW = width >= 768 ? 240 : 208;
-        const sculptureH = width >= 768 ? 150 : 130;
+        if (isOrbitPhase) {
+          // ─ ORBIT: Normal ellipse sculpture ─
+          tX = orbitX; tY = orbitY; tW = sculptW; tH = sculptH;
+          const baseOp = imagesReady.current ? 0.65 + 0.35 * depthFactor : 0;
+          const hovFactor = hoveredIdx.current !== null && hoveredIdx.current !== idx ? 0.85 : 1;
+          tOp = baseOp * hovFactor;
+          tBlur = 1.8 * (1 - depthFactor);
+          tScale = 0.94 + 0.06 * depthFactor;
+          tZ = 10 + Math.floor(depthFactor * 40);
+          lerpSpeed = LERP_ORBIT;
 
-        const targetW = sculptureW + (pos.w - sculptureW) * cardEase;
-        const targetH = sculptureH + (pos.h - sculptureH) * cardEase;
+        } else if (isSettlePhase) {
+          // ─ SETTLE: Orbit speed drops, positions held ─
+          tX = orbitX; tY = orbitY; tW = sculptW; tH = sculptH;
+          tOp = imagesReady.current ? 0.65 + 0.35 * depthFactor : 0;
+          tBlur = 1.8 * (1 - depthFactor);
+          tScale = 0.94 + 0.06 * depthFactor;
+          tZ = 10 + Math.floor(depthFactor * 40);
+          lerpSpeed = LERP_ORBIT;
 
-        // Depth parameters mapped from depthFactor
-        const baseScale = 0.94 + 0.06 * depthFactor;
-        const baseOpacity = imagesReady.current ? (0.65 + 0.35 * depthFactor) : 0;
-        const baseBlur = 1.8 * (1 - depthFactor);
-        const baseZ = 10 + Math.floor(depthFactor * 40);
+        } else if (isAlignPhase) {
+          // ─ ALIGN: Orbit → IPER strip positions (full card size)
+          // Cards lerp from frozen orbit positions directly to their strip slots
+          const aE = easeInOutQuart(alignP);
+          tX = lerp(frzX, preAlignX(idx), aE);
+          tY = lerp(frzY, stripY, aE);
+          tW = lerp(sculptW, cardW, aE);
+          tH = lerp(sculptH, cardH, aE);
+          tOp = lerp(imagesReady.current ? 0.65 + 0.35 * depthFactor : 0, 1.0, aE);
+          tBlur = lerp(1.8 * (1 - depthFactor), 0, aE);
+          tScale = lerp(0.94 + 0.06 * depthFactor, 1.0, aE);
+          tZ = 20;
+          lerpSpeed = LERP_TRANSITION;
 
-        // 6. Viewport Center Focus Dynamics
-        const cardCenterY = targetY - (scrollVal > heroH ? (scrollVal - heroH) : 0) + (targetH / 2);
-        const distFromCenter = Math.abs(cardCenterY - viewportCenterY);
-        const maxFocusDist = height * 0.45;
-        const rawCenterFactor = Math.max(0, 1 - distFromCenter / maxFocusDist);
-        const centerFocusP = rawCenterFactor * rawCenterFactor * cardEase; // Active in exhibition state
+        } else if (isParadePhase) {
+          // ─ PARADE: IPER-style horizontal strip ─
+          // All cards stay at same Y (strip), slide left as activeF grows
+          const sX = stripX(idx);
+          const cardRight = sX + cardW;
 
-        const focusScale = 1.0 + 0.02 * centerFocusP;
-        const focusLiftY = -6 * centerFocusP;
+          tX = sX;
+          tY = stripY;
+          tW = cardW;
+          tH = cardH;
 
-        // 7. Hover & Neighbor Interactions (4-6px lift, 1.015 scale, 5% neighbor dimming)
-        const isThisHovered = hoveredIndexRef.current === idx;
-        let targetHoverDepth = isThisHovered ? 1.0 : 0.0;
-        let targetHoverBlur = isThisHovered ? -baseBlur : 0.0;
-        let neighborOpacityFactor = (isAnyHovered && !isThisHovered) ? 0.88 : (0.92 + 0.08 * centerFocusP);
+          // Silky smooth edge fade-in & blur-in (entering right) and fade-out & blur-out (exiting left)
+          const leftFadeZone  = smoothstep(-cardW * 0.35, cardW * 0.25, cardRight);
+          const rightFadeZone = 1.0 - smoothstep(w - cardW * 0.25, w + cardW * 0.35, sX);
+          tOp = leftFadeZone * rightFadeZone;
 
-        if (state.hoverDepth === undefined) {
-          state.hoverDepth = 0.0;
-          state.hoverBlur = 0.0;
+          // Edge blur: 0px in active viewport -> 10px as cards slide into/out of boundaries
+          tBlur  = (1.0 - tOp) * 10;
+          tScale = 1.0;
+          tZ = tOp > 0.05 ? Math.max(5, 20 - Math.floor(absOff * 4)) : 1;
+          lerpSpeed = LERP_PARADE;
+
+        } else {
+          // ─ POST-SHOWCASE or fallback ─
+          tX = stripX(0); tY = stripY;
+          tW = cardW; tH = cardH;
+          tOp = 0; tBlur = 0; tScale = 1.0; tZ = 5;
+          lerpSpeed = LERP_TRANSITION;
         }
 
-        // Gentle ease ~200ms
-        state.hoverDepth += (targetHoverDepth - state.hoverDepth) * 0.15;
-        state.hoverBlur += (targetHoverBlur - state.hoverBlur) * 0.15;
+        // Apply post-showcase global fade
+        tOp *= (1 - postFade);
 
-        // 8. Calculate Absolute Visual States
-        state.x = targetX;
-        state.y = targetY;
-        state.w = targetW;
-        state.h = targetH;
+        // ── Lerp toward targets ───────────────────────────────
+        const pLerp  = lerpSpeed;
+        const pFast  = Math.min(pLerp * 2.5, 0.35);
+        const inAnim = settleP > 0.02 || inPinPhase;
 
-        const hoverScale = 1.0 + 0.015 * state.hoverDepth;
-        const interpolatedScale = (baseScale + (1.0 - baseScale) * cardEase) * hoverScale * focusScale;
-        const interpolatedOpacity = (baseOpacity + (1.0 - baseOpacity) * cardEase) * neighborOpacityFactor;
-        const interpolatedBlur = (baseBlur * (1 - cardEase)) + state.hoverBlur;
+        state.x += (tX - state.x) * (inAnim ? pLerp : pFast);
+        state.y += (tY - state.y) * (inAnim ? pLerp : pFast);
+        state.w += (tW - state.w) * pLerp;
+        state.h += (tH - state.h) * pLerp;
+        state.opacity += (tOp - state.opacity) * (inAnim ? pLerp * 1.4 : 0.12);
+        state.scale   += (tScale - state.scale) * pLerp;
+        state.blur    += (tBlur - state.blur) * 0.10;
+        state.zIndex   = tZ;
 
-        state.scale = interpolatedScale;
-        state.opacity = Math.min(1.0, Math.max(0.0, interpolatedOpacity));
-        state.blur = Math.max(interpolatedBlur, 0);
-        state.zIndex = Math.round(baseZ + (state.hoverDepth * 50) + Math.round(centerFocusP * 20));
+        // Hover lift in orbit only
+        const hoverLiftY = isOrbitPhase || isSettlePhase
+          ? (-5 * (state.hoverDepth || 0))
+          : 0;
 
-        // Lift ~5px on hover + focus lift
-        const liftY = (-5 * state.hoverDepth) + focusLiftY;
+        // Hover state (orbit + settle only)
+        const thisHovered = hoveredIdx.current === idx;
+        if (isOrbitPhase || isSettlePhase) {
+          if (state.hoverDepth === undefined) state.hoverDepth = 0;
+          state.hoverDepth += ((thisHovered ? 1 : 0) - state.hoverDepth) * 0.15;
+        } else {
+          state.hoverDepth = (state.hoverDepth || 0) * 0.9;
+        }
 
-        // Velocity tilt back for cards
-        const tiltX = Math.max(-2, Math.min(2, smoothVelocity.current * -0.05));
+        // Velocity tilt (orbit/settle only)
+        const tiltX = (isOrbitPhase || isSettlePhase)
+          ? clamp(smoothVelocity.current * -0.05, -2, 2)
+          : 0;
 
-        // 9. Style DOM nodes directly with Cache (GPU friendly)
-        const el1 = cardRefs1.current[idx];
-        const el2 = cardRefs2.current[idx];
-
+        // ── Write to DOM ──────────────────────────────────────
         const applyStyle = (el, prop, val) => {
-          const cacheKey = '_' + prop;
-          if (el[cacheKey] !== val) {
-            el.style[prop] = val;
-            el[cacheKey] = val;
-          }
+          const k = '_' + prop;
+          if (el[k] !== val) { el.style[prop] = val; el[k] = val; }
         };
 
-        const finalFilter = state.blur > 0.25 ? `blur(${state.blur.toFixed(1)}px)` : 'none';
+        const finalBlur = state.blur > 0.15 ? `blur(${state.blur.toFixed(1)}px)` : 'none';
+        const tx = state.x.toFixed(1);
+        const ty = (state.y + hoverLiftY).toFixed(1);
+        const sc = state.scale.toFixed(3);
+        const rx = tiltX.toFixed(2);
+        const transform = `translate3d(${tx}px, ${ty}px, 0) scale(${sc}) rotateX(${rx}deg)`;
 
-        if (el1) {
-          applyStyle(el1, 'perspective', '800px');
-          applyStyle(el1, 'transform', `translate3d(${state.x.toFixed(1)}px, ${(state.y + liftY).toFixed(1)}px, 0) scale(${state.scale.toFixed(3)}) rotateX(${tiltX.toFixed(2)}deg)`);
-          applyStyle(el1, 'width', `${state.w.toFixed(1)}px`);
-          applyStyle(el1, 'height', `${state.h.toFixed(1)}px`);
-          applyStyle(el1, 'opacity', state.opacity.toFixed(3));
-          applyStyle(el1, 'filter', finalFilter);
-          applyStyle(el1, 'zIndex', Math.round(state.zIndex));
-        }
+        const isFeaturedCard = isParadePhase && (absOff < 0.5 || activeIdx === idx);
+        const isPassiveCard  = isParadePhase && !isFeaturedCard && absOff < 2.5;
+        const inShowcaseCard = isParadePhase || alignP > 0.25;
 
-        if (el2) {
-          applyStyle(el2, 'perspective', '800px');
-          applyStyle(el2, 'transform', `translate3d(${state.x.toFixed(1)}px, ${(state.y + liftY).toFixed(1)}px, 0) scale(${state.scale.toFixed(3)}) rotateX(${tiltX.toFixed(2)}deg)`);
-          applyStyle(el2, 'width', `${state.w.toFixed(1)}px`);
-          applyStyle(el2, 'height', `${state.h.toFixed(1)}px`);
-          applyStyle(el2, 'opacity', state.opacity.toFixed(3));
-          applyStyle(el2, 'filter', finalFilter);
-          applyStyle(el2, 'zIndex', Math.round(state.zIndex));
-        }
+        // Calculate inner image horizontal parallax offset as card moves left on scroll
+        const cardCenterX  = state.x + state.w / 2;
+        const relativeX    = (cardCenterX - w * 0.5) / (w * 0.5); // -1.5 to +1.5 relative to screen center
+        const imgParallaxX = clamp(-relativeX * 52, -55, 55);    // image glides smoothly inside fixed card frame
+
+        [cardRefs1.current[idx], cardRefs2.current[idx]].forEach(el => {
+          if (!el) return;
+          applyStyle(el, 'transform', transform);
+          applyStyle(el, 'width',   `${state.w.toFixed(1)}px`);
+          applyStyle(el, 'height',  `${state.h.toFixed(1)}px`);
+          applyStyle(el, 'opacity', clamp(state.opacity, 0, 1).toFixed(3));
+          applyStyle(el, 'filter',  finalBlur);
+          applyStyle(el, 'zIndex',  Math.round(state.zIndex));
+          el.classList.toggle('is-featured', isFeaturedCard);
+          el.classList.toggle('is-passive',  isPassiveCard);
+          el.classList.toggle('in-showcase', inShowcaseCard);
+
+          const imgEl = el.querySelector('.project-card-image');
+          if (imgEl) {
+            const imgTx = (isParadePhase || alignP > 0.5) ? imgParallaxX.toFixed(1) : 0;
+            applyStyle(imgEl, 'transform', `translate3d(${imgTx}px, 0, 0) scale(1.14)`);
+          }
+        });
       });
 
-      mainRafId = requestAnimationFrame(tick);
+      // ── H: INFO OVERLAY UPDATE ─────────────────────────────
+      // Header fades in smoothly as Section 02 covers Hero, stays 1.0 while pinned
+      const sec2Coverage = smoothstep(heroH * 0.35, heroH * 0.85, sv);
+      const infoOp  = isPinned.current ? 1.0 : sec2Coverage;
+      const dotsOp  = isPinned.current ? 1.0 : sec2Coverage;
+
+      if (activeIdx !== lastActiveIdx || infoOp > 0) {
+        lastActiveIdx = activeIdx;
+        const proj = projects[Math.min(activeIdx, projects.length - 1)];
+
+        [infoRef1.current, infoRef2.current].forEach(ir => {
+          if (!ir) return;
+          if (ir.titleEl)    ir.titleEl.textContent    = proj.title;
+          if (ir.subtitleEl) ir.subtitleEl.textContent = proj.subtitle;
+          if (ir.categoryEl) ir.categoryEl.textContent = proj.category;
+          if (ir.numberEl)   ir.numberEl.textContent   = proj.number;
+          if (ir.yearEl)     ir.yearEl.textContent     = proj.number;
+          if (ir.infoBlockEl) {
+            ir.infoBlockEl.style.opacity = infoOp.toFixed(3);
+            ir.infoBlockEl.style.transform = Math.abs(magnetOffset.current) > 0.1 
+              ? `translate3d(0, ${magnetOffset.current.toFixed(1)}px, 0)` 
+              : 'none';
+          }
+
+          if (ir.dotEls) {
+            const dotsParent = ir.dotEls[0]?.parentElement;
+            if (dotsParent) dotsParent.style.opacity = dotsOp.toFixed(3);
+            ir.dotEls.forEach((dot, di) => {
+              if (dot) dot.classList.toggle('is-active', di === activeIdx);
+            });
+          }
+        });
+      }
+
+      rafId = requestAnimationFrame(tick);
     };
 
-    mainRafId = requestAnimationFrame(tick);
+    rafId = requestAnimationFrame(tick);
 
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('resize', measurePlaceholders);
-      clearTimeout(initialMeasureTimeout);
+      window.removeEventListener('mousemove',   onMouseMove);
+      window.removeEventListener('resize',      measureScenes);
+      window.removeEventListener('wheel',       onWheel,      { capture: true });
+      window.removeEventListener('touchstart',  onTouchStart, { capture: true });
+      window.removeEventListener('touchmove',   onTouchMove,  { capture: true });
+      clearTimeout(initTimeout);
       lenis.destroy();
-      if (mainRafId) cancelAnimationFrame(mainRafId);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
 
+  // ─────────────────────────────────────────────────────────────
+  // JSX — identical layered structure
+  // ─────────────────────────────────────────────────────────────
   return (
     <div className="relative w-full">
-      {/* ── DUMMY SCROLL SPACER (Creates native browser scroll height) ── */}
+      {/* ── SCROLL SPACER ── */}
       <div
         style={{ height: `${contentHeight}px` }}
         className="w-full relative pointer-events-none"
       />
 
-      {/* ── LAYER 1: BASE DESIGN (5 STACKED ENVIRONMENTAL SCENE BOARDS) ── */}
+      {/* ══ LAYER 1: BASE ══════════════════════════════════════ */}
       <div className="fixed inset-0 w-full h-full z-10 overflow-hidden pointer-events-none">
         <Canvas isLayer2={false} />
         <div
           ref={content1Ref}
           className="absolute top-0 left-0 w-full h-full pointer-events-auto z-10"
         >
-          {/* Scene 01 — Identity (Dark Concrete - Stationary at top:0) */}
+          {/* Scene 01 — Hero */}
           <div
             ref={(el) => (sceneRefs1.current[0] = el)}
             className="scene-environment material-concrete scene-01"
             style={{ top: 0, height: '100vh', zIndex: 1 }}
           >
-            <Hero ref={heroRef} isLayer2={false} />
+            <Hero ref={heroRef1} isLayer2={false} />
           </div>
 
-          {/* Scene 02 — Selected Work (Luxury Museum Paper - Slides UP over Hero) */}
+          {/* Scene 02 — Exhibition Backdrop */}
           <div
             ref={(el) => (sceneRefs1.current[1] = el)}
-            className="scene-environment material-luxury-paper scene-02"
-            style={{ top: 0, zIndex: 2 }}
+            className="scene-environment scene-02"
+            style={{ top: 0, height: '100vh', zIndex: 2 }}
           >
-            <SelectedWorks isLayer2={false} placeholderRefs={placeholderRefs} isSettled={isScene2Settled} />
+            <ProjectShowcase isLayer2={false} infoRef={infoRef1.current} />
           </div>
 
-          {/* Scene 03 — Case Studies (Dark Anodized Aluminium - Slides UP over Scene 02) */}
+          {/* Scene 03 — Manifesto */}
           <div
             ref={(el) => (sceneRefs1.current[2] = el)}
             className="scene-environment material-anodized-aluminium scene-03"
-            style={{ top: 0, zIndex: 3 }}
+            style={{ top: 0, height: '100vh', zIndex: 3 }}
           >
-            <CaseStudiesScene isLayer2={false} />
+            <ManifestoScene isLayer2={false} manifestoRef={manifestoRef1.current} />
           </div>
 
-          {/* Scene 04 — About (Soft Limestone Plaster - Slides UP over Scene 03) */}
+          {/* Scene 04 — About */}
           <div
             ref={(el) => (sceneRefs1.current[3] = el)}
             className="scene-environment material-limestone-plaster scene-04"
@@ -646,7 +887,7 @@ export default function RevealLensContainer() {
             <AboutScene isLayer2={false} />
           </div>
 
-          {/* Scene 05 — Contact (Deep Architectural Charcoal - Slides UP over Scene 04) */}
+          {/* Scene 05 — Contact */}
           <div
             ref={(el) => (sceneRefs1.current[4] = el)}
             className="scene-environment material-deep-charcoal scene-05"
@@ -655,7 +896,7 @@ export default function RevealLensContainer() {
             <ContactScene isLayer2={false} />
           </div>
 
-          {/* Layer 1 Project Cards overlay */}
+          {/* ── Project Cards (Layer 1) ── */}
           {projects.map((project, idx) => (
             <ProjectCard
               key={project.id}
@@ -663,15 +904,15 @@ export default function RevealLensContainer() {
               index={idx}
               isLayer2={false}
               cardRef={(el) => (cardRefs1.current[idx] = el)}
-              onPointerEnter={() => { hoveredIndexRef.current = idx; }}
-              onPointerLeave={() => { hoveredIndexRef.current = null; }}
+              onPointerEnter={() => { hoveredIdx.current = idx; }}
+              onPointerLeave={() => { hoveredIdx.current = null; }}
               style={{ position: 'absolute', top: 0, left: 0, opacity: 0 }}
             />
           ))}
         </div>
       </div>
 
-      {/* ── LAYER 2: REVEALED INVERTED DESIGN (CLIPPED 5 SCENES) ── */}
+      {/* ══ LAYER 2: INVERTED CLIPPED ══════════════════════════ */}
       <div
         ref={layer2Ref}
         className="fixed inset-0 w-full h-full z-20 overflow-hidden pointer-events-none select-none"
@@ -681,34 +922,34 @@ export default function RevealLensContainer() {
           ref={content2Ref}
           className="absolute top-0 left-0 w-full h-full z-10"
         >
-          {/* Scene 01 — Identity (Layer 2 Inverted - Transparent background so WebGL Orange Lens shows through) */}
+          {/* Scene 01 — Hero (L2) */}
           <div
             ref={(el) => (sceneRefs2.current[0] = el)}
             className="scene-environment scene-layer2 scene-01"
             style={{ top: 0, height: '100vh', zIndex: 1, backgroundColor: 'transparent', backgroundImage: 'none' }}
           >
-            <Hero isLayer2={true} />
+            <Hero ref={heroRef2} isLayer2={true} />
           </div>
 
-          {/* Scene 02 — Selected Work (Layer 2 Inverted) */}
+          {/* Scene 02 — Backdrop (L2) */}
           <div
             ref={(el) => (sceneRefs2.current[1] = el)}
             className="scene-environment scene-layer2 scene-02"
-            style={{ top: 0, zIndex: 2, backgroundColor: 'transparent', backgroundImage: 'none' }}
+            style={{ top: 0, height: '100vh', zIndex: 2, backgroundColor: 'transparent', backgroundImage: 'none' }}
           >
-            <SelectedWorks isLayer2={true} placeholderRefs={null} isSettled={isScene2Settled} />
+            <ProjectShowcase isLayer2={true} infoRef={infoRef2.current} />
           </div>
 
-          {/* Scene 03 — Case Studies (Layer 2 Inverted) */}
+          {/* Scene 03 — Manifesto (L2) */}
           <div
             ref={(el) => (sceneRefs2.current[2] = el)}
             className="scene-environment scene-layer2 scene-03"
-            style={{ top: 0, zIndex: 3, backgroundColor: 'transparent', backgroundImage: 'none' }}
+            style={{ top: 0, height: '100vh', zIndex: 3, backgroundColor: 'transparent', backgroundImage: 'none' }}
           >
-            <CaseStudiesScene isLayer2={true} />
+            <ManifestoScene isLayer2={true} manifestoRef={manifestoRef2.current} />
           </div>
 
-          {/* Scene 04 — About (Layer 2 Inverted) */}
+          {/* Scene 04 — About (L2) */}
           <div
             ref={(el) => (sceneRefs2.current[3] = el)}
             className="scene-environment scene-layer2 scene-04"
@@ -717,7 +958,7 @@ export default function RevealLensContainer() {
             <AboutScene isLayer2={true} />
           </div>
 
-          {/* Scene 05 — Contact (Layer 2 Inverted) */}
+          {/* Scene 05 — Contact (L2) */}
           <div
             ref={(el) => (sceneRefs2.current[4] = el)}
             className="scene-environment scene-layer2 scene-05"
@@ -726,7 +967,7 @@ export default function RevealLensContainer() {
             <ContactScene isLayer2={true} />
           </div>
 
-          {/* Layer 2 Project Cards overlay */}
+          {/* ── Project Cards (Layer 2) ── */}
           {projects.map((project, idx) => (
             <ProjectCard
               key={project.id}
@@ -740,7 +981,7 @@ export default function RevealLensContainer() {
         </div>
       </div>
 
-      {/* ── BOOT SEQUENCE OVERLAY (GSAP Master Timeline) ── */}
+      {/* ── BOOT SEQUENCE ── */}
       <BootSequence currentPos={currentPos} currentSize={currentSize} />
     </div>
   );
