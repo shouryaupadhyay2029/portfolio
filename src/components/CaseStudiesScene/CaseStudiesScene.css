@@ -1,0 +1,120 @@
+/* SHOURYA // FOUNDRY — Case Studies Scene Styles (Dark Anodized Aluminium) */
+
+.case-studies-section {
+  padding-top: clamp(8rem, 16vw, 18rem);
+  padding-bottom: clamp(12rem, 20vw, 24rem);
+  position: relative;
+  width: 100%;
+}
+
+.case-studies-header {
+  margin-bottom: clamp(5rem, 10vw, 12rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.case-studies-tag {
+  color: var(--color-accent);
+  letter-spacing: 0.25em;
+  font-size: 0.75rem;
+}
+
+.case-studies-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.8rem, 6.5vw, 5.2rem);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+
+.case-studies-title .title-line {
+  display: inline-block;
+  margin-right: 0.35em;
+}
+
+.case-studies-subtitle {
+  font-family: var(--font-body);
+  font-size: clamp(0.95rem, 1.25vw, 1.2rem);
+  color: #8a909a;
+  line-height: 1.6;
+  max-width: 48ch;
+}
+
+.case-studies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 2.5rem;
+}
+
+.case-study-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 2.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.5rem;
+  transition: border-color 0.35s ease, background-color 0.35s ease, transform 0.35s ease;
+}
+
+.case-study-card:hover {
+  border-color: rgba(216, 111, 42, 0.4);
+  background: rgba(255, 255, 255, 0.035);
+  transform: translateY(-4px);
+}
+
+.case-study-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+}
+
+.cs-code {
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.cs-metrics {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.68rem;
+}
+
+.cs-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.3rem, 2vw, 1.75rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #f0f2f5;
+}
+
+.cs-description {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: #8a909a;
+  line-height: 1.55;
+}
+
+.cs-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+}
+
+.cs-category {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.cs-link {
+  color: var(--color-accent);
+  transition: color 0.3s ease;
+}

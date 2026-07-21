@@ -1,17 +1,45 @@
-/* SHOURYA // FOUNDRY — Project Placard Styles (Redesigned as Image Boards) */
+/* SHOURYA // FOUNDRY — Project Placard Clean Board Styles */
 
 .project-card-root {
   display: block;
-  border-radius: var(--radius-md);
+  position: relative;
+  border-radius: 10px;
   box-sizing: border-box;
   user-select: none;
   pointer-events: auto;
   will-change: transform, opacity, filter;
   overflow: hidden;
-  background-color: #121212;
+  background-color: #0f0f11;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
   padding: 0;
+  transition: 
+    border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+/* Soft Cursor Radial Illumination Layer */
+.project-card-cursor-light {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.4s ease;
+  mix-blend-mode: screen;
+}
+
+/* Integrated Screenshot Media Wrapper (100% Fill) */
+.project-card-media-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #080809;
 }
 
 .project-card-image {
@@ -19,22 +47,52 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  transform-origin: center center;
+  animation: slow-image-breath 24s ease-in-out infinite alternate;
+  will-change: transform;
+  transition: filter 0.4s ease, transform 0.4s ease;
 }
 
-/* Layer 1 styles (Dark charcoal, precise white borders) */
-.project-card-layer1 {
-  /* Inherits root styles */
+/* Microscopic 24s scale and 4px drift screenshot life */
+@keyframes slow-image-breath {
+  0% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.008) translate3d(-2px, -3px, 0);
+  }
+  100% {
+    transform: scale(1) translate3d(2px, 1px, 0);
+  }
 }
 
-/* Layer 2 styles (Terracotta orange contrast overrides) */
+/* Hover Experience */
+.project-card-root.is-hovered {
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 
+    0 12px 35px rgba(0, 0, 0, 0.55),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    0 0 1px rgba(216, 111, 42, 0.3);
+}
+
+.project-card-root.is-hovered .project-card-image {
+  filter: contrast(1.03) brightness(1.02);
+}
+
+/* Neighbor Dimming Interaction */
+.project-card-root.is-dimmed {
+  filter: brightness(0.92);
+  opacity: 0.88;
+}
+
+/* Layer 2 (orange inverted context) overrides */
 .project-card-layer2 {
   background-color: #d86f2a;
-  border: 1px solid rgba(24, 24, 24, 0.15);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(24, 24, 24, 0.18);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
 .project-card-layer2 .project-card-image {
-  /* Slightly blend the image with the orange background for the reveal effect */
   mix-blend-mode: multiply;
-  opacity: 0.9;
+  opacity: 0.92;
 }

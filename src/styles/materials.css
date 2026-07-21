@@ -1,0 +1,87 @@
+/* SHOURYA // FOUNDRY — Architectural Material Environments & Lighting */
+
+/* Base Environmental Scene Board Container */
+.scene-environment {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  will-change: transform;
+  overflow: hidden;
+  box-shadow: 0 -25px 60px rgba(0, 0, 0, 0.45);
+}
+
+/* ── SCENE 01: DARK ARCHITECTURAL CONCRETE ── */
+.material-concrete {
+  background-color: transparent !important;
+  color: #f5f5f7;
+}
+
+/* ── SCENE 02: WARM LUXURY MUSEUM PAPER ── */
+.material-luxury-paper {
+  background-color: #f4f2ee;
+  color: #121212;
+  position: relative;
+  background-image: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.85) 0%, rgba(244, 242, 238, 0) 75%);
+}
+
+.material-luxury-paper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paper-grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paper-grain)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+  z-index: 1;
+}
+
+.material-luxury-paper > * {
+  position: relative;
+  z-index: 2;
+}
+
+.material-luxury-paper .selected-works-title,
+.material-luxury-paper h1,
+.material-luxury-paper h2,
+.material-luxury-paper h3 {
+  color: #121212 !important;
+}
+
+.material-luxury-paper .selected-works-subtitle,
+.material-luxury-paper p,
+.material-luxury-paper span {
+  color: #44444a;
+}
+
+/* ── SCENE 03: DARK ANODIZED ALUMINIUM ── */
+.material-anodized-aluminium {
+  background-color: #0c0c0e;
+  color: #f0f2f5;
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(140, 160, 185, 0.06) 0%, rgba(12, 12, 14, 0) 70%);
+}
+
+/* ── SCENE 04: SOFT LIMESTONE / WARM PLASTER ── */
+.material-limestone-plaster {
+  background-color: #f2eeea;
+  color: #141416;
+  background-image: radial-gradient(circle at 30% 20%, rgba(216, 111, 42, 0.04) 0%, rgba(242, 238, 234, 0) 65%);
+}
+
+.material-limestone-plaster h1,
+.material-limestone-plaster h2,
+.material-limestone-plaster h3 {
+  color: #141416 !important;
+}
+
+.material-limestone-plaster p,
+.material-limestone-plaster span {
+  color: #4a4744;
+}
+
+/* ── SCENE 05: DEEP ARCHITECTURAL CHARCOAL ── */
+.material-deep-charcoal {
+  background-color: #080808;
+  color: #f5f5f7;
+  background-image: radial-gradient(circle at 50% 30%, rgba(216, 111, 42, 0.05) 0%, rgba(8, 8, 8, 0) 75%);
+}

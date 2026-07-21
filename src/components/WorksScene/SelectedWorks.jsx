@@ -12,21 +12,26 @@ import './SelectedWorks.css';
  * The parent controller measures these placeholders to determine where the
  * project placards should lock in when scrolled down.
  */
-export default function SelectedWorks({ isLayer2 = false, placeholderRefs }) {
+export default function SelectedWorks({ isLayer2 = false, placeholderRefs, isSettled = true }) {
   // Exactly five projects
   const placeholderIndices = [0, 1, 2, 3, 4];
 
   return (
-    <Section className={cn("selected-works-section", isLayer2 && "selected-works-layer2")}>
+    <Section className={cn("selected-works-section", isSettled && "is-settled", isLayer2 && "selected-works-layer2")}>
+      {/* Ambient Lighting Shift Background */}
+      <div className="selected-works-ambient-light" aria-hidden="true" />
+
       <ShowcaseContainer>
-        <div className="selected-works-header grid-12">
-          <div className="col-editorial-left">
-            <h2 className="selected-works-title text-heading">
-              Selected Work
+        <div className="selected-works-header">
+          <div className="selected-works-header-top">
+            <span className="selected-works-tag text-label">CURATED EXHIBITION</span>
+            <h2 className="selected-works-title">
+              <span className="title-line title-line-1">SELECTED</span>
+              <span className="title-line title-line-2">WORK</span>
             </h2>
           </div>
-          <div className="col-editorial-right selected-works-subtitle text-caption">
-            <span>A collection of digital installations detailing design precision, creative engineering and visual systems.</span>
+          <div className="selected-works-subtitle">
+            <p>A collection of projects exploring thoughtful interfaces, interactive experiences and digital craftsmanship.</p>
           </div>
         </div>
 
@@ -35,7 +40,7 @@ export default function SelectedWorks({ isLayer2 = false, placeholderRefs }) {
             <div
               key={idx}
               ref={(el) => {
-                if (placeholderRefs) {
+                if (placeholderRefs && placeholderRefs.current) {
                   placeholderRefs.current[idx] = el;
                 }
               }}

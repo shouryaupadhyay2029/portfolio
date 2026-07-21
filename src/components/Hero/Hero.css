@@ -43,22 +43,29 @@
   pointer-events: none;
 }
 
-/* ── TOP NAV LOGO ────────────────────────────────────────── */
+/* ── TOP NAV LOGO & MARQUEES ───────────────────────────── */
 .hero-nav {
   position: absolute;
   top: 44px; /* Nudged up slightly */
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 clamp(1.5rem, 4vw, 4rem);
+  box-sizing: border-box;
   z-index: 50; /* Above interaction plane */
-  pointer-events: auto;
-  /* Perspective for 3D tilt */
-  perspective: 600px;
+  pointer-events: none; /* Let clicks pass through to interaction plane if needed */
 }
 
 .hero-nav-logo-link {
   display: block;
   position: relative;
   cursor: pointer;
+  pointer-events: auto; /* Logo remains clickable */
+  flex-shrink: 0;
+  margin: 0 85px; /* Generous 85px breathing space on each side */
+  z-index: 2;
 }
 
 .hero-nav-logo {
@@ -67,6 +74,78 @@
   width: auto;
   image-rendering: auto;
   display: block;
+}
+
+/* ── MARQUEES ──────────────────────────────────────────── */
+.marquee-ribbon {
+  flex: 1;
+  height: 34px;
+  border-radius: 6px;
+  background-color: #d86f2a;
+  
+  /* Soft lighting gradient + ceramic/plaster texture (optimized for performance) */
+  background-image: 
+    linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 100%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='4' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  overflow: hidden;
+
+  /* Evaporate the ribbon edges perfectly into the background */
+  mask-image: linear-gradient(to right, transparent 0px, black 120px, black calc(100% - 120px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0px, black 120px, black calc(100% - 120px), transparent 100%);
+}
+
+.marquee-mask {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.marquee-track {
+  display: flex;
+  white-space: nowrap;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.95); /* White 95% */
+  will-change: transform;
+}
+
+/* Marquee elements */
+.marquee-track span {
+  padding-right: 1.5em; /* Space before next repetition */
+}
+
+/* Left marquee moves RIGHT (toward logo) */
+.marquee-track-left {
+  animation: marquee-move-right 45s linear infinite;
+  /* Shift content far left initially, move towards 0 */
+  transform: translateX(-50%);
+}
+
+/* Right marquee moves LEFT (toward logo) */
+.marquee-track-right {
+  animation: marquee-move-left 45s linear infinite;
+  transform: translateX(0%);
+}
+
+@keyframes marquee-move-right {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0%); }
+}
+
+@keyframes marquee-move-left {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
 }
 
 /* ── CENTRAL BLOCK ─────────────────────────────────────── */
@@ -176,6 +255,57 @@
   flex-shrink: 0;
 }
 
+/* ── EDITORIAL SCROLL INDICATOR ────────────────────────── */
+.hero-scroll-indicator {
+  position: absolute;
+  left: 64px;
+  bottom: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.hero-scroll-text {
+  writing-mode: vertical-rl;
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.hero-scroll-line {
+  position: relative;
+  width: 1px;
+  height: 60px;
+  background-color: rgba(255, 255, 255, 0.12); /* Very subtle gray line */
+}
+
+.hero-scroll-dot {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #d86f2a;
+  box-shadow: 0 0 6px rgba(216, 111, 42, 0.3); /* Tiny soft glow */
+  animation: scroll-dot-move 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes scroll-dot-move {
+  0% { transform: translate(-50%, 0); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate(-50%, 60px); opacity: 0; }
+}
+
 /* ── DELETED SIDEBAR AND PREVIEW STRIP ─────────────────── */
 
 /* ── RESPONSIVE: TABLET (< 1024px) ─────────────────────── */
@@ -191,6 +321,10 @@
   .hero-sub-row {
     gap: 2rem;
   }
+  .hero-scroll-indicator {
+    left: 40px;
+    bottom: 40px;
+  }
 }
 
 /* ── RESPONSIVE: MOBILE (< 640px) ──────────────────────── */
@@ -205,10 +339,19 @@
 
   .hero-nav {
     top: 36px;
+    padding: 0 clamp(1.2rem, 5vw, 2rem);
   }
 
   .hero-nav-logo {
     height: 35px; /* Mobile scaling (increased slightly) */
+  }
+
+  .hero-nav-logo-link {
+    margin: 0 30px; /* Reduce breathing space on mobile */
+  }
+  
+  .marquee-track {
+    font-size: 9px;
   }
 
   .hero-wordmark {
@@ -216,6 +359,11 @@
     font-size: clamp(3rem, 13.5vw, 4.5rem);
     line-height: 0.92;
     letter-spacing: -0.03em;
+  }
+
+  .hero-scroll-indicator {
+    left: 30px;
+    bottom: 30px;
   }
 
   .hero-line-foundry {

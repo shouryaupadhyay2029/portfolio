@@ -3,6 +3,9 @@ import Lenis from 'lenis';
 import Canvas from '../Canvas/Canvas';
 import Hero from '../Hero/Hero';
 import SelectedWorks from '../WorksScene/SelectedWorks';
+import CaseStudiesScene from '../CaseStudiesScene/CaseStudiesScene';
+import AboutScene from '../AboutScene/AboutScene';
+import ContactScene from '../ContactScene/ContactScene';
 import ProjectCard from '../WorksScene/ProjectCard';
 import BootSequence from '../BootSequence/BootSequence';
 
@@ -10,11 +13,51 @@ const LERP_POS = 0.40; // hardware pointer polling smoothing
 const LERP_SIZE = 0.20; // snappy clip expansion/contraction
 
 const projects = [
-  { id: 'placepro', image: '/PLACEPRO.png' },
-  { id: 'devstage', image: '/DEVSTAGE.png' },
-  { id: 'eventra', image: '/EVENTRA.png' },
-  { id: 'tattva', image: '/TATTVA.png' },
-  { id: 'nexevent', image: '/NEXEVENT.png' }
+  {
+    id: 'placepro',
+    number: '01',
+    title: 'PLACEPRO',
+    subtitle: 'Institutional Placement & Career Intelligence Platform',
+    category: 'FULL STACK / ARCHITECTURE',
+    year: '2025',
+    image: '/PLACEPRO.png'
+  },
+  {
+    id: 'devstage',
+    number: '02',
+    title: 'DEVSTAGE',
+    subtitle: 'Student Showcase & Project Collaboration Engine',
+    category: 'CREATIVE ENGINEERING',
+    year: '2024',
+    image: '/DEVSTAGE.png'
+  },
+  {
+    id: 'eventra',
+    number: '03',
+    title: 'EVENTRA',
+    subtitle: 'Immersive Event Discovery & Ticket Engine',
+    category: 'UI/UX ARCHITECTURE',
+    year: '2024',
+    image: '/EVENTRA.png'
+  },
+  {
+    id: 'tattva',
+    number: '04',
+    title: 'TATTVA',
+    subtitle: 'Cultural Heritage & Digital Archive Experience',
+    category: 'DIGITAL STUDIO / SYSTEMS',
+    year: '2023',
+    image: '/TATTVA.png'
+  },
+  {
+    id: 'nexevent',
+    number: '05',
+    title: 'NEXEVENT',
+    subtitle: 'Next-Generation Campus Event Management Suite',
+    category: 'PRODUCT INFRASTRUCTURE',
+    year: '2023',
+    image: '/NEXEVENT.png'
+  }
 ];
 
 // Orbital sculpture properties (Elliptical orbit, empty center)
@@ -37,9 +80,17 @@ export default function RevealLensContainer() {
   const cardRefs2 = useRef([]);
   const placeholderRefs = useRef([]);
 
+  // Refs for the 5 Environmental Scene Boards
+  const sceneRefs1 = useRef([]);
+  const sceneRefs2 = useRef([]);
+  const sceneHeights = useRef([800, 1200, 1000, 1000, 900]);
+  const sceneOffsets = useRef([0, 800, 2000, 3000, 4000]);
+
   // Measured placeholder coordinates
   const placeholderPositions = useRef([]);
-  const [contentHeight, setContentHeight] = useState(1200);
+  const [contentHeight, setContentHeight] = useState(4900);
+  const [isScene2Settled, setIsScene2Settled] = useState(false);
+  const isScene2SettledRef = useRef(false);
 
   // Real-time mouse coordinates (in viewport pixels)
   const targetPos = useRef({ x: window.innerWidth * 0.5, y: window.innerHeight * 0.5 });
@@ -50,6 +101,8 @@ export default function RevealLensContainer() {
 
   // Smooth scroll tracking
   const scrollY = useRef(0);
+  const scrollVelocity = useRef(0);
+  const smoothVelocity = useRef(0);
   const animTime = useRef(0);
   const currentSpeed = useRef(1.0);
   const hoveredIndexRef = useRef(null);
@@ -78,7 +131,7 @@ export default function RevealLensContainer() {
     })
   );
 
-  // Cache placeholder coordinates relative to content wrapper
+  // Cache placeholder & scene board coordinates
   const measurePlaceholders = () => {
     viewportParams.current.w = window.innerWidth;
     viewportParams.current.h = window.innerHeight;
@@ -98,6 +151,7 @@ export default function RevealLensContainer() {
       };
     }
 
+    // Measure Project Card Placeholders
     const newPositions = placeholderRefs.current.map((placeholder) => {
       if (!placeholder) return null;
       const rect = placeholder.getBoundingClientRect();
@@ -111,7 +165,29 @@ export default function RevealLensContainer() {
 
     if (newPositions.every(pos => pos !== null && pos.w > 0)) {
       placeholderPositions.current = newPositions;
-      setContentHeight(content1Ref.current.offsetHeight);
+    }
+
+    // Measure Scene Board Heights & Offsets
+    const heroH = window.innerHeight;
+    sceneHeights.current[0] = heroH;
+
+    let accumulatedOffset = heroH;
+    const newHeights = [heroH];
+    const newOffsets = [0, heroH];
+
+    sceneRefs1.current.forEach((sceneEl, i) => {
+      if (i > 0 && sceneEl) {
+        const h = sceneEl.offsetHeight || 1000;
+        newHeights[i] = h;
+        accumulatedOffset += h;
+        newOffsets[i + 1] = accumulatedOffset;
+      }
+    });
+
+    if (newHeights.length >= 2) {
+      sceneHeights.current = newHeights;
+      sceneOffsets.current = newOffsets;
+      setContentHeight(accumulatedOffset + 200);
     }
   };
 
@@ -131,15 +207,18 @@ export default function RevealLensContainer() {
       img.src = p.image;
     });
 
-    // 1. Initialize Lenis Smooth Scroll
+    // 1. Initialize Lenis Smooth Scroll (Instant & Responsive Tuning)
     const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      syncTouch: true
+      duration: 0.45,
+      easing: (t) => 1 - Math.pow(1 - t, 3), // Instant cubic ease out for immediate response
+      syncTouch: true,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 1.5,
     });
 
     lenis.on('scroll', (e) => {
       scrollY.current = e.scroll;
+      scrollVelocity.current = e.velocity || 0;
     });
 
     // 2. Mouse Move Tracking
@@ -151,7 +230,7 @@ export default function RevealLensContainer() {
     window.addEventListener('mousemove', onMouseMove, { passive: true });
     window.addEventListener('resize', measurePlaceholders);
 
-    // Trigger initial placeholder measurement after short render delay
+    // Trigger initial placeholder & scene measurement after short render delay
     const initialMeasureTimeout = setTimeout(measurePlaceholders, 150);
 
     // 3. Unified Animation Game Loop
@@ -174,7 +253,6 @@ export default function RevealLensContainer() {
       // ────────────────────────────────────────────────────────
       // A. MOUSE CURSOR & LENS CLIPPING
       // ────────────────────────────────────────────────────────
-      // Re-introduce slight lerp to smooth out hardware pointer polling jitter
       currentPos.current.x += (targetPos.current.x - currentPos.current.x) * LERP_POS;
       currentPos.current.y += (targetPos.current.y - currentPos.current.y) * LERP_POS;
 
@@ -194,7 +272,7 @@ export default function RevealLensContainer() {
         let dx = 0; let dy = 0;
         if (cx < minX) dx = minX - cx;
         else if (cx > maxX) dx = cx - maxX;
-        
+
         if (cy < minY) dy = minY - cy;
         else if (cy > maxY) dy = cy - maxY;
 
@@ -225,11 +303,11 @@ export default function RevealLensContainer() {
 
       const w = currentSize.current.w * p;
       const h = currentSize.current.h * p;
-      
+
       if (w > 0.01 && h > 0.01) {
         const cx = currentPos.current.x;
         const cy = currentPos.current.y;
-        
+
         const finalTop = cy - h / 2;
         const finalLeft = cx - w / 2;
         const finalBottom = viewportParams.current.h - (cy + h / 2);
@@ -239,7 +317,6 @@ export default function RevealLensContainer() {
         const newClip = `inset(${finalTop}px ${finalRight}px ${finalBottom}px ${finalLeft}px round ${finalR}px)`;
         const newOpacity = p.toFixed(3);
 
-        // Performance Optimization: Cache DOM writes
         if (el._lastClip !== newClip) {
           el.style.clipPath = newClip;
           el._lastClip = newClip;
@@ -265,14 +342,71 @@ export default function RevealLensContainer() {
       }
 
       // ────────────────────────────────────────────────────────
-      // B. PAGE SCROLL TRANSLATION (SYNCED LAYERS)
+      // B. PAGE SCROLL & LAYERED SCENE BOARD PHYSICS
+      // Hero (Scene 01) remains stationary at top: 0!
+      // Scene 02, 03, 04, 05 slide UP as stacked layers over Hero!
       // ────────────────────────────────────────────────────────
       const scrollVal = scrollY.current;
-      if (content1Ref.current) {
-        content1Ref.current.style.transform = `translate3d(0, ${-scrollVal.toFixed(1)}px, 0)`;
-      }
-      if (content2Ref.current) {
-        content2Ref.current.style.transform = `translate3d(0, ${-scrollVal.toFixed(1)}px, 0)`;
+      smoothVelocity.current += (scrollVelocity.current - smoothVelocity.current) * 0.1;
+      const heroH = window.innerHeight;
+
+      // 1. Scene 01 (Hero) stays stationary at top: 0 with subtle scaling recession
+      const heroRecessP = Math.min(1, Math.max(0, scrollVal / heroH));
+      const heroScale = 1.0 - 0.04 * heroRecessP;
+
+      [sceneRefs1.current[0], sceneRefs2.current[0]].forEach((sceneEl) => {
+        if (sceneEl) {
+          sceneEl.style.transform = `translate3d(0, 0, 0) scale(${heroScale.toFixed(4)})`;
+        }
+      });
+
+      // 2. Scene 02 (Selected Work): Slides UP over Hero from bottom (100vh -> 0px)
+      const h1 = sceneHeights.current[1] || 1200;
+      const scene1Y = scrollVal < heroH ? (heroH - scrollVal) : -(scrollVal - heroH);
+
+      [sceneRefs1.current[1], sceneRefs2.current[1]].forEach((sceneEl) => {
+        if (sceneEl) {
+          sceneEl.style.transform = `translate3d(0, ${scene1Y.toFixed(1)}px, 0)`;
+        }
+      });
+
+      // 3. Scene 03 (Case Studies): Slides UP over Scene 02
+      const h2 = sceneHeights.current[2] || 1000;
+      const offset2 = heroH + h1;
+      const scene2Y = scrollVal < offset2 ? (offset2 - scrollVal) : -(scrollVal - offset2);
+
+      [sceneRefs1.current[2], sceneRefs2.current[2]].forEach((sceneEl) => {
+        if (sceneEl) {
+          sceneEl.style.transform = `translate3d(0, ${scene2Y.toFixed(1)}px, 0)`;
+        }
+      });
+
+      // 4. Scene 04 (About): Slides UP over Scene 03
+      const h3 = sceneHeights.current[3] || 1000;
+      const offset3 = offset2 + h2;
+      const scene3Y = scrollVal < offset3 ? (offset3 - scrollVal) : -(scrollVal - offset3);
+
+      [sceneRefs1.current[3], sceneRefs2.current[3]].forEach((sceneEl) => {
+        if (sceneEl) {
+          sceneEl.style.transform = `translate3d(0, ${scene3Y.toFixed(1)}px, 0)`;
+        }
+      });
+
+      // 5. Scene 05 (Contact): Slides UP over Scene 04
+      const offset4 = offset3 + h3;
+      const scene4Y = scrollVal < offset4 ? (offset4 - scrollVal) : -(scrollVal - offset4);
+
+      [sceneRefs1.current[4], sceneRefs2.current[4]].forEach((sceneEl) => {
+        if (sceneEl) {
+          sceneEl.style.transform = `translate3d(0, ${scene4Y.toFixed(1)}px, 0)`;
+        }
+      });
+
+      // B3. Selected Work Scene Settlement State Trigger
+      const isSettledNow = scrollVal >= heroH - window.innerHeight * 0.45;
+      if (isSettledNow !== isScene2SettledRef.current) {
+        isScene2SettledRef.current = isSettledNow;
+        setIsScene2Settled(isSettledNow);
       }
 
       // ────────────────────────────────────────────────────────
@@ -285,17 +419,16 @@ export default function RevealLensContainer() {
       }
 
       // Lazy measurement backup
-      if (placeholderPositions.current.length === 0) {
+      if (placeholderPositions.current.length === 0 || sceneHeights.current[0] === 800) {
         measurePlaceholders();
       }
 
       // ────────────────────────────────────────────────────────
-      // D. PROJECT CARDS LAYOUT & PHYSICS INJECTION
+      // D. PROJECT CARDS LAYOUT, VIEWPORT FOCUS & PHYSICS INJECTION
       // ────────────────────────────────────────────────────────
       const width = window.innerWidth;
       const height = window.innerHeight;
-      const scrollRange = height * 0.85;
-      const scrollProgress = Math.min(Math.max(scrollVal / scrollRange, 0), 1);
+      const scrollProgress = Math.min(Math.max(scrollVal / (height * 0.95), 0), 1);
       const smoothP = scrollProgress * scrollProgress * (3 - 2 * scrollProgress); // Smoothstep
 
       // Base sculpture center (Empty middle) and Ellipse Radii
@@ -304,26 +437,28 @@ export default function RevealLensContainer() {
       let RX = 0;
       let RY = 0;
 
-      // Reduced footprint by ~15-20% for tighter layout
       if (width >= 1024) {
-        cx = width * 0.70; // Adjusted for reduced footprint
+        cx = width * 0.70;
         cy = height * 0.50;
-        RX = width * 0.175; // Reduced from 0.21
+        RX = width * 0.175;
         RY = RX * 0.60;
       } else if (width >= 768) {
         cx = width * 0.68;
         cy = height * 0.50;
-        RX = width * 0.22; // Reduced from 0.26
+        RX = width * 0.22;
         RY = RX * 0.60;
       } else {
         cx = width * 0.5;
-        cy = height * 0.70; // Pushed down for mobile
-        RX = width * 0.32; // Reduced from 0.38
+        cy = height * 0.70;
+        RX = width * 0.32;
         RY = RX * 0.55;
       }
 
       // Global rotation (1 rev every 100 sec)
       const globalAngle = (animTime.current / 100) * Math.PI * 2;
+
+      const isAnyHovered = hoveredIndexRef.current !== null;
+      const viewportCenterY = height / 2;
 
       projects.forEach((_, idx) => {
         const phys = ORBIT_PHYSICS[idx];
@@ -332,82 +467,86 @@ export default function RevealLensContainer() {
         // 1. Orbital position
         const theta = globalAngle + phys.phase;
 
-        // Elliptical coordinates around empty center
         const dx = Math.cos(theta) * RX;
         const dy = Math.sin(theta) * RY;
 
-        // Depth calculations based on sin(theta) -> mapped to [0, 1] (1 is frontmost, bottom of screen)
         const depthFactor = (Math.sin(theta) + 1) / 2;
 
         const xs_final = cx + dx * (1 - smoothP);
         const ys_final = cy + dy * (1 - smoothP);
 
         // 3. Grid placeholder position
-        const pos = placeholderPositions.current[idx] || { x: xs_final, y: ys_final, w: 240, h: 150 };
+        const pos = placeholderPositions.current[idx] || { x: xs_final, y: ys_final, w: 320, h: 220 };
 
-        // 4. Interpolate coordinates & dimensions between Sculpture and Gallery states
-        const targetX = xs_final + (pos.x - xs_final) * smoothP;
-        const targetY = ys_final + (pos.y - ys_final) * smoothP;
+        // 5. Staggered Entrance & Interpolation between Sculpture (Hero) and Exhibition (Gallery) states
+        const staggerStart = idx * 0.10;
+        const cardP = Math.min(Math.max((smoothP - staggerStart) / Math.max(0.01, 1.0 - staggerStart), 0), 1);
+        const cardEase = cardP * cardP * (3 - 2 * cardP); // Smoothstep curve
 
-        // Landscape presentation boards (16:10 aspect ratio)
+        const targetX = xs_final + (pos.x - xs_final) * cardEase;
+        const targetY = ys_final + (pos.y - ys_final) * cardEase;
+
+        // Landscape presentation boards
         const sculptureW = width >= 768 ? 240 : 208;
         const sculptureH = width >= 768 ? 150 : 130;
 
-        const targetW = sculptureW + (pos.w - sculptureW) * smoothP;
-        const targetH = sculptureH + (pos.h - sculptureH) * smoothP;
+        const targetW = sculptureW + (pos.w - sculptureW) * cardEase;
+        const targetH = sculptureH + (pos.h - sculptureH) * cardEase;
 
         // Depth parameters mapped from depthFactor
-        const baseScale = 0.94 + 0.06 * depthFactor; // Front: 100%, Back: 94%
-        const baseOpacity = imagesReady.current ? (0.65 + 0.35 * depthFactor) : 0; // Hidden until loaded
-        const baseBlur = 1.8 * (1 - depthFactor); // Front: 0, Back: 1.8
-        const baseZ = 10 + Math.floor(depthFactor * 40); // 10 to 50
+        const baseScale = 0.94 + 0.06 * depthFactor;
+        const baseOpacity = imagesReady.current ? (0.65 + 0.35 * depthFactor) : 0;
+        const baseBlur = 1.8 * (1 - depthFactor);
+        const baseZ = 10 + Math.floor(depthFactor * 40);
 
-        // 5. Apply Hover Overrides (Strictly No Scaling / Tilt / Glow per Phase 08.6)
-        let targetHoverDepth = 0.0; // 0.0 = grounded, 1.0 = elevated
-        let targetHoverOpacity = 1.0;
-        let targetHoverBlur = 0.0;
+        // 6. Viewport Center Focus Dynamics
+        const cardCenterY = targetY - (scrollVal > heroH ? (scrollVal - heroH) : 0) + (targetH / 2);
+        const distFromCenter = Math.abs(cardCenterY - viewportCenterY);
+        const maxFocusDist = height * 0.45;
+        const rawCenterFactor = Math.max(0, 1 - distFromCenter / maxFocusDist);
+        const centerFocusP = rawCenterFactor * rawCenterFactor * cardEase; // Active in exhibition state
 
-        if (hoveredIndexRef.current === idx) {
-          targetHoverDepth = 1.0;
-          targetHoverOpacity = baseOpacity > 0 ? (1.0 / baseOpacity) : 1.0; // Image remains perfectly sharp/opaque
-          targetHoverBlur = -baseBlur;
-        } else {
-          // Unhovered cards remain EXACTLY as they are (no dimming, no blur)
-          targetHoverOpacity = 1.0;
-          targetHoverBlur = 0.0;
-        }
+        const focusScale = 1.0 + 0.02 * centerFocusP;
+        const focusLiftY = -6 * centerFocusP;
 
-        // 6. Temporally Lerp ONLY the hover states (Keeps orbit mathematically continuous)
+        // 7. Hover & Neighbor Interactions (4-6px lift, 1.015 scale, 5% neighbor dimming)
+        const isThisHovered = hoveredIndexRef.current === idx;
+        let targetHoverDepth = isThisHovered ? 1.0 : 0.0;
+        let targetHoverBlur = isThisHovered ? -baseBlur : 0.0;
+        let neighborOpacityFactor = (isAnyHovered && !isThisHovered) ? 0.88 : (0.92 + 0.08 * centerFocusP);
+
         if (state.hoverDepth === undefined) {
           state.hoverDepth = 0.0;
-          state.hoverOpacity = 1.0;
           state.hoverBlur = 0.0;
         }
-        
-        // Gentle ease 180-220ms. lerp factor ~0.15 gives a smooth ~200ms ease at 60fps.
+
+        // Gentle ease ~200ms
         state.hoverDepth += (targetHoverDepth - state.hoverDepth) * 0.15;
-        state.hoverOpacity += (targetHoverOpacity - state.hoverOpacity) * 0.15;
         state.hoverBlur += (targetHoverBlur - state.hoverBlur) * 0.15;
 
-        // 7. Calculate Absolute Visual States
+        // 8. Calculate Absolute Visual States
         state.x = targetX;
         state.y = targetY;
         state.w = targetW;
         state.h = targetH;
 
-        const interpolatedBaseScale = baseScale + (1.0 - baseScale) * smoothP;
-        const interpolatedOpacity = baseOpacity + (1.0 - baseOpacity) * smoothP;
-        const interpolatedBlur = baseBlur + (0.0 - baseBlur) * smoothP;
+        const hoverScale = 1.0 + 0.015 * state.hoverDepth;
+        const interpolatedScale = (baseScale + (1.0 - baseScale) * cardEase) * hoverScale * focusScale;
+        const interpolatedOpacity = (baseOpacity + (1.0 - baseOpacity) * cardEase) * neighborOpacityFactor;
+        const interpolatedBlur = (baseBlur * (1 - cardEase)) + state.hoverBlur;
 
-        state.scale = interpolatedBaseScale; // NO hover scaling
-        state.opacity = interpolatedOpacity * state.hoverOpacity;
-        state.blur = Math.max(interpolatedBlur + state.hoverBlur, 0);
-        state.zIndex = Math.round(baseZ + (state.hoverDepth * 50)); // Increase z-index
-        
-        // Compute subtle Y-translation for elevation (~16px of perceived depth)
-        const liftY = -16 * state.hoverDepth;
+        state.scale = interpolatedScale;
+        state.opacity = Math.min(1.0, Math.max(0.0, interpolatedOpacity));
+        state.blur = Math.max(interpolatedBlur, 0);
+        state.zIndex = Math.round(baseZ + (state.hoverDepth * 50) + Math.round(centerFocusP * 20));
 
-        // 8. Style DOM nodes directly with Cache (GPU friendly)
+        // Lift ~5px on hover + focus lift
+        const liftY = (-5 * state.hoverDepth) + focusLiftY;
+
+        // Velocity tilt back for cards
+        const tiltX = Math.max(-2, Math.min(2, smoothVelocity.current * -0.05));
+
+        // 9. Style DOM nodes directly with Cache (GPU friendly)
         const el1 = cardRefs1.current[idx];
         const el2 = cardRefs2.current[idx];
 
@@ -419,40 +558,26 @@ export default function RevealLensContainer() {
           }
         };
 
+        const finalFilter = state.blur > 0.25 ? `blur(${state.blur.toFixed(1)}px)` : 'none';
+
         if (el1) {
-          applyStyle(el1, 'transform', `translate3d(${state.x.toFixed(1)}px, ${(state.y + liftY).toFixed(1)}px, 0) scale(${state.scale.toFixed(3)})`);
+          applyStyle(el1, 'perspective', '800px');
+          applyStyle(el1, 'transform', `translate3d(${state.x.toFixed(1)}px, ${(state.y + liftY).toFixed(1)}px, 0) scale(${state.scale.toFixed(3)}) rotateX(${tiltX.toFixed(2)}deg)`);
           applyStyle(el1, 'width', `${state.w.toFixed(1)}px`);
           applyStyle(el1, 'height', `${state.h.toFixed(1)}px`);
           applyStyle(el1, 'opacity', state.opacity.toFixed(3));
-          applyStyle(el1, 'filter', state.blur > 0.05 ? `blur(${state.blur.toFixed(2)}px)` : 'none');
+          applyStyle(el1, 'filter', finalFilter);
           applyStyle(el1, 'zIndex', Math.round(state.zIndex));
-          
-          // Dynamic box shadow and border for depth
-          const shadowY = 4 + 8 * state.hoverDepth;
-          const shadowBlur = 15 + 15 * state.hoverDepth;
-          const shadowAlpha = 0.3 - 0.05 * state.hoverDepth;
-          const borderAlpha = 0.08 + 0.07 * state.hoverDepth;
-          
-          applyStyle(el1, 'boxShadow', `0 ${shadowY.toFixed(1)}px ${shadowBlur.toFixed(1)}px rgba(0, 0, 0, ${shadowAlpha.toFixed(2)})`);
-          applyStyle(el1, 'border', `1px solid rgba(255, 255, 255, ${borderAlpha.toFixed(3)})`);
         }
-        
+
         if (el2) {
-          applyStyle(el2, 'transform', `translate3d(${state.x.toFixed(1)}px, ${(state.y + liftY).toFixed(1)}px, 0) scale(${state.scale.toFixed(3)})`);
+          applyStyle(el2, 'perspective', '800px');
+          applyStyle(el2, 'transform', `translate3d(${state.x.toFixed(1)}px, ${(state.y + liftY).toFixed(1)}px, 0) scale(${state.scale.toFixed(3)}) rotateX(${tiltX.toFixed(2)}deg)`);
           applyStyle(el2, 'width', `${state.w.toFixed(1)}px`);
           applyStyle(el2, 'height', `${state.h.toFixed(1)}px`);
           applyStyle(el2, 'opacity', state.opacity.toFixed(3));
-          applyStyle(el2, 'filter', state.blur > 0.05 ? `blur(${state.blur.toFixed(2)}px)` : 'none');
+          applyStyle(el2, 'filter', finalFilter);
           applyStyle(el2, 'zIndex', Math.round(state.zIndex));
-          
-          // Layer 2 shadow/border (Terracotta orange context)
-          const shadowY = 4 + 8 * state.hoverDepth;
-          const shadowBlur = 15 + 15 * state.hoverDepth;
-          const shadowAlpha = 0.05 + 0.05 * state.hoverDepth;
-          const borderAlpha = 0.15 + 0.10 * state.hoverDepth;
-          
-          applyStyle(el2, 'boxShadow', `0 ${shadowY.toFixed(1)}px ${shadowBlur.toFixed(1)}px rgba(0, 0, 0, ${shadowAlpha.toFixed(2)})`);
-          applyStyle(el2, 'border', `1px solid rgba(24, 24, 24, ${borderAlpha.toFixed(3)})`);
         }
       });
 
@@ -478,21 +603,64 @@ export default function RevealLensContainer() {
         className="w-full relative pointer-events-none"
       />
 
-      {/* ── LAYER 1: BASE DESIGN ── */}
+      {/* ── LAYER 1: BASE DESIGN (5 STACKED ENVIRONMENTAL SCENE BOARDS) ── */}
       <div className="fixed inset-0 w-full h-full z-10 overflow-hidden pointer-events-none">
         <Canvas isLayer2={false} />
         <div
           ref={content1Ref}
-          className="absolute top-0 left-0 w-full pointer-events-auto z-10"
+          className="absolute top-0 left-0 w-full h-full pointer-events-auto z-10"
         >
-          <Hero ref={heroRef} isLayer2={false} />
-          <SelectedWorks isLayer2={false} placeholderRefs={placeholderRefs} />
+          {/* Scene 01 — Identity (Dark Concrete - Stationary at top:0) */}
+          <div
+            ref={(el) => (sceneRefs1.current[0] = el)}
+            className="scene-environment material-concrete scene-01"
+            style={{ top: 0, height: '100vh', zIndex: 1 }}
+          >
+            <Hero ref={heroRef} isLayer2={false} />
+          </div>
 
-          {/* Layer 1 Cards overlay */}
+          {/* Scene 02 — Selected Work (Luxury Museum Paper - Slides UP over Hero) */}
+          <div
+            ref={(el) => (sceneRefs1.current[1] = el)}
+            className="scene-environment material-luxury-paper scene-02"
+            style={{ top: 0, zIndex: 2 }}
+          >
+            <SelectedWorks isLayer2={false} placeholderRefs={placeholderRefs} isSettled={isScene2Settled} />
+          </div>
+
+          {/* Scene 03 — Case Studies (Dark Anodized Aluminium - Slides UP over Scene 02) */}
+          <div
+            ref={(el) => (sceneRefs1.current[2] = el)}
+            className="scene-environment material-anodized-aluminium scene-03"
+            style={{ top: 0, zIndex: 3 }}
+          >
+            <CaseStudiesScene isLayer2={false} />
+          </div>
+
+          {/* Scene 04 — About (Soft Limestone Plaster - Slides UP over Scene 03) */}
+          <div
+            ref={(el) => (sceneRefs1.current[3] = el)}
+            className="scene-environment material-limestone-plaster scene-04"
+            style={{ top: 0, zIndex: 4 }}
+          >
+            <AboutScene isLayer2={false} />
+          </div>
+
+          {/* Scene 05 — Contact (Deep Architectural Charcoal - Slides UP over Scene 04) */}
+          <div
+            ref={(el) => (sceneRefs1.current[4] = el)}
+            className="scene-environment material-deep-charcoal scene-05"
+            style={{ top: 0, zIndex: 5 }}
+          >
+            <ContactScene isLayer2={false} />
+          </div>
+
+          {/* Layer 1 Project Cards overlay */}
           {projects.map((project, idx) => (
             <ProjectCard
               key={project.id}
               project={project}
+              index={idx}
               isLayer2={false}
               cardRef={(el) => (cardRefs1.current[idx] = el)}
               onPointerEnter={() => { hoveredIndexRef.current = idx; }}
@@ -503,7 +671,7 @@ export default function RevealLensContainer() {
         </div>
       </div>
 
-      {/* ── LAYER 2: REVEALED INVERTED DESIGN (CLIPPED) ── */}
+      {/* ── LAYER 2: REVEALED INVERTED DESIGN (CLIPPED 5 SCENES) ── */}
       <div
         ref={layer2Ref}
         className="fixed inset-0 w-full h-full z-20 overflow-hidden pointer-events-none select-none"
@@ -511,16 +679,59 @@ export default function RevealLensContainer() {
         <Canvas isLayer2={true} />
         <div
           ref={content2Ref}
-          className="absolute top-0 left-0 w-full z-10"
+          className="absolute top-0 left-0 w-full h-full z-10"
         >
-          <Hero isLayer2={true} />
-          <SelectedWorks isLayer2={true} placeholderRefs={null} />
+          {/* Scene 01 — Identity (Layer 2 Inverted - Transparent background so WebGL Orange Lens shows through) */}
+          <div
+            ref={(el) => (sceneRefs2.current[0] = el)}
+            className="scene-environment scene-layer2 scene-01"
+            style={{ top: 0, height: '100vh', zIndex: 1, backgroundColor: 'transparent', backgroundImage: 'none' }}
+          >
+            <Hero isLayer2={true} />
+          </div>
 
-          {/* Layer 2 Cards overlay (identical mapping) */}
+          {/* Scene 02 — Selected Work (Layer 2 Inverted) */}
+          <div
+            ref={(el) => (sceneRefs2.current[1] = el)}
+            className="scene-environment scene-layer2 scene-02"
+            style={{ top: 0, zIndex: 2, backgroundColor: 'transparent', backgroundImage: 'none' }}
+          >
+            <SelectedWorks isLayer2={true} placeholderRefs={null} isSettled={isScene2Settled} />
+          </div>
+
+          {/* Scene 03 — Case Studies (Layer 2 Inverted) */}
+          <div
+            ref={(el) => (sceneRefs2.current[2] = el)}
+            className="scene-environment scene-layer2 scene-03"
+            style={{ top: 0, zIndex: 3, backgroundColor: 'transparent', backgroundImage: 'none' }}
+          >
+            <CaseStudiesScene isLayer2={true} />
+          </div>
+
+          {/* Scene 04 — About (Layer 2 Inverted) */}
+          <div
+            ref={(el) => (sceneRefs2.current[3] = el)}
+            className="scene-environment scene-layer2 scene-04"
+            style={{ top: 0, zIndex: 4, backgroundColor: 'transparent', backgroundImage: 'none' }}
+          >
+            <AboutScene isLayer2={true} />
+          </div>
+
+          {/* Scene 05 — Contact (Layer 2 Inverted) */}
+          <div
+            ref={(el) => (sceneRefs2.current[4] = el)}
+            className="scene-environment scene-layer2 scene-05"
+            style={{ top: 0, zIndex: 5, backgroundColor: 'transparent', backgroundImage: 'none' }}
+          >
+            <ContactScene isLayer2={true} />
+          </div>
+
+          {/* Layer 2 Project Cards overlay */}
           {projects.map((project, idx) => (
             <ProjectCard
               key={project.id}
               project={project}
+              index={idx}
               isLayer2={true}
               cardRef={(el) => (cardRefs2.current[idx] = el)}
               style={{ position: 'absolute', top: 0, left: 0, opacity: 0 }}
