@@ -1,13 +1,15 @@
 import React, { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import BootShader from './BootShader';
 import './BootSequence.css';
 
 gsap.registerPlugin(useGSAP);
 
 export default function BootSequence({ currentPos, currentSize }) {
+  const [bootComplete, setBootComplete] = React.useState(false);
   const rootRef = useRef(null);
-  const orangeBgRef = useRef(null);
+  const shaderRef = useRef(null);
   const slashContainerRef = useRef(null);
   const shouryaLineRef = useRef(null);
   const foundryLineRef = useRef(null);
@@ -20,12 +22,14 @@ export default function BootSequence({ currentPos, currentSize }) {
     // Master timeline
     const tl = gsap.timeline();
 
-    // 1. 0.00s: Orange background fades in over 600ms
-    tl.to(orangeBgRef.current, {
-      opacity: 1,
-      duration: 0.6,
-      ease: 'power2.inOut'
-    }, 0.0);
+    // 1. 0.00s: Boot shader background fades in over 600ms
+    if (shaderRef.current) {
+      tl.to(shaderRef.current, {
+        opacity: 1,
+        duration: 0.6,
+        ease: 'power2.inOut'
+      }, 0.0);
+    }
 
     // 2. 0.90s (0.60 + 0.30 pause): Stickers Enter
     const stickersEnterStart = 0.90;
@@ -149,16 +153,19 @@ export default function BootSequence({ currentPos, currentSize }) {
       },
       onComplete: () => {
         // Overlay is cleanly hidden, revealing the real lens and page
-        rootRef.current.style.display = 'none';
+        if (rootRef.current) rootRef.current.style.display = 'none';
+        setBootComplete(true);
       }
     }, 7.10);
 
   }, { scope: rootRef });
 
+  if (bootComplete) return null;
+
   return (
     <div className="boot-sequence-root" ref={rootRef}>
-      {/* Orange Background Layer */}
-      <div className="boot-material-noise" ref={orangeBgRef} />
+      {/* Premium WebGL Wave Shader Background (Classy Orange) */}
+      <BootShader ref={shaderRef} className="boot-shader-canvas" style={{ opacity: 0 }} />
 
       {/* True Centred Composition */}
       <div className="boot-centered-layout">

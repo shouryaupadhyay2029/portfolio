@@ -250,6 +250,11 @@
   font-weight: 700;
 }
 
+/* IBM Plex Mono — used for nav pills, badges, labels, monospace UI */
+.font-mono {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace !important;
+}
+
 /* =========================================================
    LAYOUT SYSTEM & PRIMITIVES
    ========================================================= */

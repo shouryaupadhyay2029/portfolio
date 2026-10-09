@@ -43,6 +43,97 @@
   pointer-events: none;
 }
 
+.hero-shader-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Synapser Studio Architectural Grid Lines Overlay */
+.hero-shader-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(to right, rgba(60, 56, 44, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(60, 56, 44, 0.08) 1px, transparent 1px);
+  background-size: 54px 54px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── WARM CREAM CSS BACKGROUND ───────────────────────────── */
+.hero-css-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  transform: translateZ(0); /* promote to GPU layer */
+
+  /* Base: espresso shadow → terracotta → parchment → cream */
+  background:
+    radial-gradient(
+      ellipse at 46% 40%,
+      #FEF5E7 0%,
+      #F5DDB8 22%,
+      #E8C499 44%,
+      #C47A45 66%,
+      #7A3B1E 84%,
+      #3B1F10 100%
+    );
+
+  /* Deep soft vignette from all edges */
+  box-shadow:
+    inset 0 0  80px rgba(59, 31, 16, 0.22),
+    inset 0 0 160px rgba(59, 31, 16, 0.10);
+}
+
+/* Diagonal warm amber sweep — adds wave-like character */
+.hero-css-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      122deg,
+      transparent 0%,
+      rgba(196, 122, 69, 0.14) 35%,
+      rgba(254, 245, 231, 0.08) 60%,
+      transparent 100%
+    );
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* Fine parchment grain — animates very slowly */
+.hero-css-bg::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.14'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  animation: hero-grain-drift 90s linear infinite alternate;
+  will-change: transform;
+}
+
+@keyframes hero-grain-drift {
+  0%   { transform: translate3d(0,   0,   0) scale(1.00); }
+  100% { transform: translate3d(-2%, -2%, 0) scale(1.03); }
+}
+
 /* ── TOP NAV LOGO & MARQUEES ───────────────────────────── */
 .hero-nav {
   position: absolute;
@@ -81,13 +172,7 @@
   flex: 1;
   height: 34px;
   border-radius: 6px;
-  background-color: #d86f2a;
-  
-  /* Soft lighting gradient + ceramic/plaster texture (optimized for performance) */
-  background-image: 
-    linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 100%),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='4' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
-  background-repeat: repeat;
+  background: transparent;
   
   display: flex;
   align-items: center;
@@ -116,7 +201,7 @@
   font-weight: 500;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.95); /* White 95% */
+  color: rgba(30, 18, 10, 0.72); /* Warm charcoal on cream */
   will-change: transform;
 }
 
@@ -192,7 +277,7 @@
   letter-spacing: -0.045em;
   line-height: 0.92;
   text-transform: uppercase;
-  color: var(--color-text-primary);
+  color: #1C1208; /* Deep warm espresso — primary on cream */
   margin: 0;
   /* Left-align: the right side of the screen breathes */
   text-align: left;
@@ -208,24 +293,23 @@
   display: block;
 }
 
-/* SHOURYA: brighter, primary weight */
+/* SHOURYA: deep warm espresso on cream */
 .hero-line-shourya {
   font-family: 'Astera Casty', var(--font-heading);
-  color: var(--color-text-primary);
+  color: #1C1208;
 }
 
-/* // FOUNDRY: slightly muted, indented optically by the slash */
+/* // FOUNDRY: warm umber, slightly muted on cream */
 .hero-line-foundry {
   font-family: 'Feldora Demo', var(--font-heading);
-  color: rgba(245, 245, 247, 0.62);
+  color: rgba(90, 52, 28, 0.72);
   /* Editorial indent: aligns the F of FOUNDRY under the HO of SHOURYA */
   padding-left: clamp(1rem, 2.5vw, 2.8rem);
 }
 
 .hero-slash {
-  /* The double-slash is the structural punctuation mark of the brand.
-     Muted so it reads as separator, not additional word. */
-  color: rgba(245, 245, 247, 0.18);
+  /* Terracotta accent — brand identity preserved on cream */
+  color: rgba(201, 106, 43, 0.45);
   margin-right: 0.18em;
   font-weight: 300;
   letter-spacing: -0.02em;
@@ -247,7 +331,7 @@
   font-weight: 400;
   line-height: 1.65;
   letter-spacing: 0.005em;
-  color: var(--color-text-secondary);
+  color: rgba(60, 38, 22, 0.60); /* Warm muted charcoal on cream */
   /* Max width keeps lines short (editorial measure) */
   max-width: 22ch;
   /* Indent to align with H of SHOURYA (optical) */
@@ -275,14 +359,14 @@
   font-weight: 400;
   letter-spacing: 0.35em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(30, 18, 10, 0.38); /* Warm dim on cream */
 }
 
 .hero-scroll-line {
   position: relative;
   width: 1px;
   height: 60px;
-  background-color: rgba(255, 255, 255, 0.12); /* Very subtle gray line */
+  background-color: rgba(30, 18, 10, 0.14); /* Warm hairline on cream */
 }
 
 .hero-scroll-dot {
@@ -425,3 +509,15 @@
   color: #f5f5f7 !important;
 }
 
+/* Layer 2 marquee + scroll: revert to white (orange canvas behind them) */
+.hero-root-layer2 .marquee-track {
+  color: rgba(255, 255, 255, 0.90) !important;
+}
+
+.hero-root-layer2 .hero-scroll-text {
+  color: rgba(255, 255, 255, 0.40) !important;
+}
+
+.hero-root-layer2 .hero-scroll-line {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}

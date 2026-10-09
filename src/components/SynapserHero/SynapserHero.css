@@ -1,0 +1,265 @@
+/* ═══════════════════════════════════════════════════════════════
+   SynapserHero.css — Alberto Oviedo Style Clean Text Hero
+   Palette: Warm Editorial Cream #f3eee3 · Terracotta Accent #ad7b73
+   ═══════════════════════════════════════════════════════════════ */
+
+.oviedo-hero-root {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 720px;
+  background-color: #f3eee3;
+  overflow: hidden;
+  color: #ad7b73;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+/* ── 1. Header Navigation ───────────────────────────────────── */
+.oviedo-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding: 2.2rem 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: auto;
+}
+
+.oviedo-brand-mark .mark-code {
+  font-family: 'General Sans', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.14em;
+  color: #ad7b73;
+  text-transform: uppercase;
+}
+
+.oviedo-nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.nav-item {
+  font-family: 'General Sans', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  color: #ad7b73;
+  text-decoration: none;
+  transition: opacity 0.3s ease;
+}
+
+.nav-item:hover {
+  opacity: 0.55;
+}
+
+/* ── 2. Display Name Blocks ─────────────────────────────────── */
+.oviedo-text-block {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  will-change: transform, opacity, filter;
+}
+
+.block-shourya {
+  top: 10vh;
+  left: 4vw;
+}
+
+.block-foundry {
+  bottom: 8vh;
+  right: 4vw;
+}
+
+.oviedo-wordmark {
+  font-family: 'Bebas Neue', 'Syne', sans-serif;
+  font-size: clamp(80px, 14.5vw, 230px);
+  line-height: 0.85;
+  letter-spacing: 0.01em;
+  color: #ad7b73;
+  margin: 0;
+  padding: 0;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+/* ── 3. Center Hollow // Mark ───────────────────────────────── */
+.oviedo-center-tag {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hollow-slashes-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+}
+
+.hollow-slashes-center svg {
+  display: block;
+}
+
+/* ── 4. Editorial Dark Monochrome Solid-Corner Photo Card ────────── */
+.hero-solid-photo-card {
+  position: absolute;
+  bottom: 5rem;
+  left: 4.5vw;
+  z-index: 15;
+  width: clamp(230px, 20vw, 320px);
+  height: clamp(290px, 25vw, 400px);
+  padding: 0;
+  border-radius: 0px !important; /* Sharp 90-degree solid corners, no curves */
+  background-color: #0e0d0c;
+  border: 1.5px solid #ad7b73; /* Solid crisp border framing */
+  box-shadow: 0 28px 60px rgba(24, 20, 18, 0.35);
+  overflow: hidden;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease, border-color 0.4s ease;
+  will-change: transform, opacity, filter;
+  cursor: pointer;
+}
+
+/* Base B&W Photo Filter */
+.hero-solid-mono-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 0px !important;
+  filter: grayscale(100%) contrast(122%) brightness(108%);
+  transition: filter 0.55s ease;
+  will-change: filter, transform, opacity;
+}
+
+/* Glitch Slices (Cybernetic Split Layers) */
+.glitch-slice {
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.25s ease;
+}
+
+.card-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 60%, rgba(14, 12, 10, 0.15) 100%);
+  pointer-events: none;
+  opacity: 0.2;
+  z-index: 3;
+}
+
+.card-grain-overlay {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.04) 0px, rgba(255, 255, 255, 0.04) 1px, transparent 1px, transparent 3px);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  opacity: 0.25;
+  z-index: 4;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CLEAN CYBERNETIC HOVER PHYSICS: Duotone Morphed + Glitch Split
+   ═══════════════════════════════════════════════════════════════ */
+.hero-solid-photo-card:hover {
+  border-color: #ad7b73;
+  box-shadow: 0 32px 70px rgba(173, 123, 115, 0.4), 0 0 25px rgba(173, 123, 115, 0.25);
+}
+
+/* 1. Base image morphs into dramatic Warm Terracotta Thermal Duotone */
+.hero-solid-photo-card:hover .base-img {
+  filter: grayscale(100%) sepia(100%) hue-rotate(-25deg) saturate(260%) contrast(150%) brightness(105%);
+}
+
+/* 2. Glitch Slices Activate & Skew Across Photo */
+.hero-solid-photo-card:hover .glitch-slice-1 {
+  opacity: 0.95;
+  filter: grayscale(100%) invert(95%) contrast(200%);
+  clip-path: polygon(0 16%, 100% 16%, 100% 40%, 0 40%);
+  animation: card-glitch-slice-1 0.45s steps(2, start) infinite;
+}
+
+.hero-solid-photo-card:hover .glitch-slice-2 {
+  opacity: 0.95;
+  filter: grayscale(100%) sepia(100%) hue-rotate(170deg) contrast(180%);
+  clip-path: polygon(0 60%, 100% 60%, 100% 84%, 0 84%);
+  animation: card-glitch-slice-2 0.45s steps(2, start) infinite;
+}
+
+@keyframes scanline-sweep {
+  0%   { top: -40%; }
+  100% { top: 120%; }
+}
+
+@keyframes card-glitch-slice-1 {
+  0%   { transform: translate(-5px, -1px) skewX(-8deg); }
+  33%  { transform: translate(6px, 2px) skewX(8deg); }
+  66%  { transform: translate(-3px, 1px) skewX(-4deg); }
+  100% { transform: translate(0, 0) skewX(0); }
+}
+
+@keyframes card-glitch-slice-2 {
+  0%   { transform: translate(5px, 1px) skewX(8deg); }
+  33%  { transform: translate(-6px, -2px) skewX(-8deg); }
+  66%  { transform: translate(3px, -1px) skewX(4deg); }
+  100% { transform: translate(0, 0) skewX(0); }
+}
+
+/* ── 5. Footer Details ──────────────────────────────────────── */
+.oviedo-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding: 2.2rem 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: #ad7b73;
+  opacity: 0.85;
+  pointer-events: auto;
+}
+
+/* Responsive Overrides */
+@media (max-width: 900px) {
+  .oviedo-header, .oviedo-footer {
+    padding: 1.4rem 1.8rem;
+  }
+  .center-tag-inner {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .tag-dot {
+    display: none;
+  }
+  .block-shourya {
+    top: 12vh;
+  }
+  .block-foundry {
+    bottom: 10vh;
+  }
+  .hero-solid-photo-card {
+    bottom: 4.5rem;
+    left: 4vw;
+    width: 170px;
+    height: 215px;
+  }
+}

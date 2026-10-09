@@ -1,0 +1,80 @@
+/* Custom Cursor Styles */
+.custom-cursor-dot {
+  position: fixed;
+  top: -4px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  background-color: #383734;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+  mix-blend-mode: difference;
+}
+
+.custom-cursor-follower {
+  position: fixed;
+  top: -20px;
+  left: -20px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(56, 55, 52, 0.4);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  will-change: transform;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              top 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              left 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.3s ease,
+              background-color 0.3s ease,
+              border-radius 0.3s ease;
+}
+
+.custom-cursor-follower.is-hovered {
+  width: 56px;
+  height: 56px;
+  top: -28px;
+  left: -28px;
+  border-color: #383734;
+  background-color: rgba(56, 55, 52, 0.06);
+}
+
+.custom-cursor-follower.has-label {
+  width: 76px;
+  height: 36px;
+  top: -18px;
+  left: -38px;
+  border-radius: 20px;
+  background-color: #383734;
+  border-color: #383734;
+}
+
+.custom-cursor-label {
+  font-family: var(--font-body, sans-serif);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #dcd8c0;
+  white-space: nowrap;
+}
+
+.custom-cursor-follower.is-active {
+  transform: scale(0.85);
+}
+
+/* Hide default cursor on desktop */
+@media (hover: hover) and (pointer: fine) {
+  body {
+    cursor: none;
+  }
+  a, button, input, textarea, select {
+    cursor: none;
+  }
+}

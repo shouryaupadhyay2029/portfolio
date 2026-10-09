@@ -17,50 +17,120 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  background-color: #000000;
+  background-color: #DCD8C0; /* Synapser Studio primary creamy skin color */
   z-index: 50;
   pointer-events: none;
   overflow: hidden;
   will-change: clip-path;
 }
 
-/* Phase 2: Material Emerges (Anodized/Ceramic Texture) */
+/* Synapser Studio Tactile Moving Noise Overlay */
+.boot-sequence-root::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='synapserNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23synapserNoise)' opacity='0.18'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  animation: synapser-noise-jitter 0.25s steps(2) infinite;
+  z-index: 1;
+}
+
+@keyframes synapser-noise-jitter {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-2%, 3%); }
+  50%  { transform: translate(3%, -2%); }
+  75%  { transform: translate(-1%, -3%); }
+  100% { transform: translate(2%, 1%); }
+}
+
+.boot-shader-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Synapser Studio Architectural Grid Lines Overlay */
+.boot-shader-canvas::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(to right, rgba(60, 56, 44, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(60, 56, 44, 0.08) 1px, transparent 1px);
+  background-size: 54px 54px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Phase 2: Premium Orange Background */
 .boot-material-noise {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  background-color: #d86f2a;
+  /* 
+    Premium orange: warm, muted, classy. NOT bright #FF6600.
+    Centre = soft amber-cream highlight, edges = deep burnt umber.
+  */
+  background: radial-gradient(
+    ellipse at 50% 42%,
+    #D4783A 0%,       /* warm amber centre — the 'lit' zone */
+    #B85C1F 30%,      /* rich terracotta mid */
+    #8A3D0C 62%,      /* deep burnt sienna */
+    #4A1C04 85%,      /* smouldering umber edge */
+    #1E0A00 100%      /* near-black charcoal rim */
+  );
   opacity: 0;
   overflow: hidden;
-  /* Promote to GPU to ensure zero layout thrashing */
   transform: translateZ(0);
+  /* Deep cinematic vignette — frames the content */
+  box-shadow: inset 0 0 160px rgba(0, 0, 0, 0.72);
 }
 
+/* Soft warm amber spotlight at centre — adds depth & premium glow */
+.boot-material-noise::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 42%,
+    rgba(255, 190, 120, 0.18) 0%,   /* warm highlight */
+    rgba(180, 90,  20,  0.08) 42%,
+    transparent 68%
+  );
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* High-Tactile Film Grain & Noise Overlay */
 .boot-material-noise::before {
   content: "";
   position: absolute;
-  /* Oversize slightly so we can pan without exposing edges */
   top: -10%;
   left: -10%;
   width: 120%;
   height: 120%;
-  /* High-performance optimized noise: 1 octave, no overlay blend mode */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='4' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.30'/%3E%3C/svg%3E");
   background-repeat: repeat;
+  mix-blend-mode: overlay;
   pointer-events: none;
-  /* Animate strictly on compositor */
   will-change: transform;
-}
-
-.boot-material-noise::before {
-  /* Incredibly slow drift (~0.5 pixels/sec over 180s) */
-  animation: boot-drift-1 180s linear infinite alternate;
+  animation: boot-drift-1 120s linear infinite alternate;
 }
 
 @keyframes boot-drift-1 {
   0% { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(-3%, -3%, 0) scale(1.05); }
+  100% { transform: translate3d(-3%, -3%, 0) scale(1.04); }
 }
 
 /* True Centred Composition */
@@ -90,7 +160,7 @@
   font-family: 'Astera Casty', var(--font-heading);
   font-weight: 400;
   letter-spacing: 0.02em;
-  color: #ffffff;
+  color: #181615; /* Deep warm charcoal on Synapser creamy skin background */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1;
@@ -124,7 +194,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  stroke: #000000; /* Pure matte black */
+  stroke: rgba(201, 106, 43, 0.85); /* Rich terracotta accent mark */
   /* Hairline, elegant, architectural stroke */
   stroke-width: 1.5; 
   stroke-linecap: square;
@@ -142,8 +212,7 @@
   display: block;
   font-family: 'Feldora Demo', var(--font-heading);
   font-weight: 300;
-  /* Warm light gray per user request */
-  color: #D7D7D7;
+  color: rgba(74, 44, 24, 0.85); /* Deep oxblood umber on creamy skin background */
   /* Engineered wider spacing (2.5x - 3x normal) */
   letter-spacing: 0.35em;
   line-height: 1;

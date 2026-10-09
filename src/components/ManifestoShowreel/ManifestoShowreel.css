@@ -1,0 +1,147 @@
+/* ═══════════════════════════════════════════════════════════════
+   ManifestoShowreel.css
+   Palette: #c5bfab (slightly deeper cream) — transitional
+   ═══════════════════════════════════════════════════════════════ */
+
+.manifesto-showreel-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #cdc8b3; /* slightly warm stone — transitions from hero cream */
+  padding: 7rem 3rem 9rem 3rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Subtle noise texture layer on this section too */
+.manifesto-showreel-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.10'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Section Badge */
+.manifesto-header-badge {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5rem;
+  align-self: flex-start;
+  max-width: 1200px;
+  width: 100%;
+}
+
+.badge-number {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: #d86f2a;
+}
+
+.badge-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(40, 37, 30, 0.55);
+}
+
+/* Manifesto Text */
+.manifesto-text-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+  text-align: left;
+  max-width: 1200px;
+  width: 100%;
+  margin-bottom: 7rem;
+}
+
+.manifesto-line {
+  font-family: 'General Sans', sans-serif;
+  font-size: clamp(1.35rem, 3.6vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  color: #1e1c18;
+  margin: 0;
+  will-change: transform, opacity;
+}
+
+/* Showreel Card */
+.showreel-card-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1200px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.14);
+  will-change: transform, border-radius;
+  cursor: none;
+}
+
+.showreel-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.showreel-overlay {
+  position: absolute;
+  bottom: 2rem;
+  left: 2rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 5;
+}
+
+.showreel-label {
+  font-family: 'General Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #ffffff;
+  text-transform: uppercase;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.showreel-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 5px 14px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+@media (max-width: 768px) {
+  .manifesto-showreel-section {
+    padding: 5rem 1.5rem 6rem 1.5rem;
+  }
+  .manifesto-text-container {
+    margin-bottom: 4rem;
+  }
+}

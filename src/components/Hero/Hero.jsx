@@ -3,6 +3,7 @@ import { cn } from '../../lib/utils';
 import { lensState } from '../../lib/lensState';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import HeroShader from './HeroShader';
 import './Hero.css';
 
 /**
@@ -118,6 +119,11 @@ const Hero = forwardRef(({ className, isLayer2 = false }, ref) => {
       ref={containerRef}
       className={cn('hero-root', isLayer2 && 'hero-root-layer2', className)}
     >
+      {/* ── PREMIUM CLASSY CREAM SHADER BACKGROUND ───────────── */}
+      {!isLayer2 && (
+        <HeroShader className="hero-shader-bg" aria-hidden="true" />
+      )}
+
       {/* ── INTERACTION PLANE ──────────────────────────────────── */}
       <div 
         className="hero-interaction-plane"

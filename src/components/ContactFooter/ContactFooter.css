@@ -1,0 +1,193 @@
+/* ═══════════════════════════════════════════════════════════════
+   ContactFooter.css — Dark Espresso Closing Section
+   ═══════════════════════════════════════════════════════════════ */
+
+.contact-footer-section {
+  position: relative;
+  width: 100%;
+  min-height: 90vh;
+  background-color: #1a1814;
+  color: #c5bfab;
+  padding: 6.5rem 3rem 3rem 3rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+/* Noise overlay on dark bg */
+.contact-footer-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.contact-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(197, 191, 171, 0.55);
+  border-bottom: 1px solid rgba(197, 191, 171, 0.12);
+  padding-bottom: 1.2rem;
+}
+
+.contact-badge .badge-num {
+  color: #d86f2a;
+  font-weight: 700;
+}
+
+.contact-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background-color: #4ade80;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+  animation: status-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(74, 222, 128, 0.6); }
+  50% { opacity: 0.6; box-shadow: 0 0 14px rgba(74, 222, 128, 0.35); }
+}
+
+.contact-main {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 4rem 0;
+}
+
+.contact-headline {
+  font-family: 'General Sans', sans-serif;
+  font-size: clamp(2.4rem, 6.5vw, 6.2rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  color: #ede9dc;
+  max-width: 16ch;
+  margin: 0 0 3.5rem 0;
+}
+
+.headline-highlight {
+  color: #d86f2a;
+  font-style: italic;
+}
+
+/* Email Copy Pill */
+.contact-action-row {
+  margin-bottom: 3rem;
+}
+
+.email-copy-pill {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  padding: 13px 30px;
+  background: rgba(197, 191, 171, 0.07);
+  border: 1px solid rgba(197, 191, 171, 0.22);
+  color: #c5bfab;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: clamp(11px, 1.2vw, 14px);
+  cursor: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.06em;
+}
+
+.email-copy-pill:hover,
+.email-copy-pill.is-copied {
+  background: #d86f2a;
+  border-color: #d86f2a;
+  color: #ffffff;
+  transform: scale(1.03);
+}
+
+.copy-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 4px 11px;
+  text-transform: uppercase;
+  transition: background 0.3s ease;
+}
+
+.email-copy-pill.is-copied .copy-badge {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Social Links */
+.social-links-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.social-pill {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: rgba(197, 191, 171, 0.7);
+  text-decoration: none;
+  padding: 9px 22px;
+  border: 1px solid rgba(197, 191, 171, 0.18);
+  transition: all 0.28s ease;
+  text-transform: uppercase;
+}
+
+.social-pill:hover {
+  color: #ede9dc;
+  border-color: rgba(197, 191, 171, 0.5);
+  background: rgba(197, 191, 171, 0.06);
+}
+
+/* Bottom Bar */
+.contact-bottom-bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(197, 191, 171, 0.35);
+  border-top: 1px solid rgba(197, 191, 171, 0.1);
+  padding-top: 1.6rem;
+}
+
+@media (max-width: 768px) {
+  .contact-header,
+  .contact-bottom-bar {
+    flex-direction: column;
+    gap: 0.8rem;
+    text-align: center;
+    align-items: center;
+  }
+  .contact-footer-section { padding: 5rem 1.5rem 2rem 1.5rem; }
+}
