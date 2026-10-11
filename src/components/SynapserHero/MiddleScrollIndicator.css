@@ -1,0 +1,131 @@
+/* ═══════════════════════════════════════════════════════════════
+   MiddleScrollIndicator.css — Architectural Studio Scroll Indicator
+   Palette: Terracotta Accent #ad7b73 · Espresso #3c382c · Cream #f3eee3
+   ═══════════════════════════════════════════════════════════════ */
+
+.middle-scroll-indicator {
+  position: absolute;
+  top: 48%;
+  right: 4vw;
+  left: auto;
+  transform: translateY(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.65rem;
+  pointer-events: auto;
+  color: #ad7b73;
+  user-select: none;
+  cursor: pointer;
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.4s ease;
+  will-change: transform, opacity;
+}
+
+.middle-scroll-indicator:hover {
+  transform: translateY(-52%) scale(1.03);
+}
+
+/* ── 1. Top Index Tag ───────────────────────────────────────── */
+.scroll-tag-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  opacity: 0.85;
+}
+
+.scroll-crosshair {
+  font-size: 10px;
+  color: #ad7b73;
+  opacity: 0.7;
+}
+
+.scroll-index-code {
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #ad7b73;
+}
+
+/* ── 2. Kinetic Hairline Axis ───────────────────────────────── */
+.scroll-track-axis {
+  position: relative;
+  width: 1px;
+  height: 48px;
+  margin-right: 4px;
+  margin-left: 0;
+  background: rgba(173, 123, 115, 0.22);
+  overflow: hidden;
+}
+
+.scroll-axis-line {
+  position: absolute;
+  inset: 0;
+  background: rgba(173, 123, 115, 0.25);
+}
+
+.scroll-axis-pulse-node {
+  position: absolute;
+  top: 0;
+  left: -1.5px;
+  width: 4px;
+  height: 12px;
+  border-radius: 2px;
+  background-color: #ad7b73;
+  box-shadow: 0 0 8px rgba(173, 123, 115, 0.6);
+  animation: scroll-node-pulse 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes scroll-node-pulse {
+  0% {
+    top: 0%;
+    opacity: 0;
+    transform: scaleY(0.4);
+  }
+  25% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  75% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+    transform: scaleY(0.4);
+  }
+}
+
+/* ── 3. Editorial Action Label ───────────────────────────────── */
+.scroll-label-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #ad7b73;
+  transition:
+    color 0.3s ease,
+    letter-spacing 0.3s ease;
+}
+
+.middle-scroll-indicator:hover .scroll-label-wrapper {
+  color: #3c382c;
+  letter-spacing: 0.22em;
+}
+
+.scroll-arrow-svg {
+  width: 11px;
+  height: 11px;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.middle-scroll-indicator:hover .scroll-arrow-svg {
+  transform: translateY(3px);
+}

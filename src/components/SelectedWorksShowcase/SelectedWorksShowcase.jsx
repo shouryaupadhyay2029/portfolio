@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './SelectedWorksShowcase.css';
+
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 const PROJECTS = [
   {
@@ -46,10 +51,53 @@ const PROJECTS = [
 
 export default function SelectedWorksShowcase() {
   const [activeProject, setActiveProject] = useState(PROJECTS[0]);
+  const sectionRef  = useRef(null);
+  const headerRef   = useRef(null);
+  const listRef     = useRef(null);
+  const stageRef    = useRef(null);
+
+  useGSAP(() => {
+    if (!sectionRef.current) return;
+
+    // Header fade-in
+    gsap.fromTo(headerRef.current,
+      { opacity: 0, y: 18 },
+      {
+        opacity: 1, y: 0, duration: 0.9, ease: 'power3.out',
+        scrollTrigger: { trigger: headerRef.current, start: 'top 88%' },
+      }
+    );
+
+    // Card stagger entrance
+    const cards = listRef.current?.querySelectorAll('.works-card');
+    if (cards?.length) {
+      gsap.fromTo(cards,
+        { opacity: 0, x: -28 },
+        {
+          opacity: 1, x: 0,
+          duration: 0.85,
+          ease: 'power3.out',
+          stagger: 0.1,
+          scrollTrigger: { trigger: listRef.current, start: 'top 82%' },
+        }
+      );
+    }
+
+    // Stage reveal
+    gsap.fromTo(stageRef.current,
+      { opacity: 0, scale: 0.96 },
+      {
+        opacity: 1, scale: 1, duration: 1.1, ease: 'power3.out',
+        scrollTrigger: { trigger: stageRef.current, start: 'top 80%' },
+      }
+    );
+  }, { scope: sectionRef });
 
   return (
-    <section className="works-showcase-section" id="works">
-      <div className="works-header font-mono">
+    <section className="works-showcase-section" id="works" ref={sectionRef}>
+
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <div className="works-header font-mono" ref={headerRef}>
         <div className="works-badge">
           <span className="badge-num">001 /</span> SELECTED WORKS
         </div>
@@ -57,8 +105,9 @@ export default function SelectedWorksShowcase() {
       </div>
 
       <div className="works-container">
-        {/* Left Side: Interactive Project Cards Stack */}
-        <div className="works-list">
+
+        {/* Left Side: Interactive Project List */}
+        <div className="works-list" ref={listRef}>
           {PROJECTS.map((project, idx) => (
             <div
               key={project.id}
@@ -85,7 +134,7 @@ export default function SelectedWorksShowcase() {
         </div>
 
         {/* Right Side: Dynamic Active Preview Stage */}
-        <div className="works-stage">
+        <div className="works-stage" ref={stageRef}>
           <div className="stage-frame">
             <video
               key={activeProject.id}
@@ -102,6 +151,7 @@ export default function SelectedWorksShowcase() {
             </div>
           </div>
         </div>
+
       </div>
     </section>
   );

@@ -1,308 +1,221 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import GrainCanvas from './GrainCanvas';
+import SliceDisplacementText from './SliceDisplacementText';
+import PixelVanishingImage from './PixelVanishingImage';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import './SynapserHero.css';
 
 gsap.registerPlugin(useGSAP);
 
-export default function SynapserHero() {
-  const containerRef = useRef(null);
-  const shouryaRef   = useRef(null);
-  const foundryRef   = useRef(null);
-  const footerRef    = useRef(null);
-  const centerTagRef = useRef(null);
-  const polaroidRef  = useRef(null);
+export default function SynapserHero({ onIntroComplete }) {
+  const containerRef    = useRef(null);
+  const shouryaRef      = useRef(null);
+  const foundryRef      = useRef(null);
+  const footerRef       = useRef(null);
+  const centerTagRef    = useRef(null);
+  const polaroidRef     = useRef(null);
+  const pixelVanishRef  = useRef(null);
+  // Gates the scroll RAF loop — only activates after intro finishes
+  const scrollReadyRef  = useRef(false);
 
+  /* ═══════════════════════════════════════════════════════════════
+     PHASE 1 — Cinematic Intro
+  ═══════════════════════════════════════════════════════════════ */
   useGSAP(() => {
     if (!containerRef.current || !shouryaRef.current || !foundryRef.current) return;
 
-    // Calculate deltas for:
-    // 1. Initial colossal state (scale 3.2 in center)
-    // 2. Zoomed-out state (scale 1.0 in center)
-    // 3. Final corner positions (x: 0, y: 0)
     const getDeltas = () => {
       const sRect = shouryaRef.current.getBoundingClientRect();
       const fRect = foundryRef.current.getBoundingClientRect();
-
-      const screenCX = window.innerWidth / 2;
+      const screenCX = window.innerWidth  / 2;
       const screenCY = window.innerHeight / 2;
-
-      const initialScale = 3.2; // Large colossal display scale close to screen
-      const gap = 30; // base gap at scale 1
-
-      // Initial Colossal bounds (scale 3.2)
+      const initialScale = 3.2;
+      const gap = 30;
       const scaledWs = sRect.width * initialScale;
       const scaledWf = fRect.width * initialScale;
-      const totalWidthColossal = scaledWs + scaledWf + (gap * initialScale);
-
-      const sInitialCX = screenCX - totalWidthColossal / 2 + scaledWs / 2;
-      const fInitialCX = screenCX + totalWidthColossal / 2 - scaledWf / 2;
-
-      // Zoomed-out bounds in Center (scale 1.0)
-      const totalWidthZoomed = sRect.width + fRect.width + gap;
-      const sZoomedCX = screenCX - totalWidthZoomed / 2 + sRect.width / 2;
-      const fZoomedCX = screenCX + totalWidthZoomed / 2 - fRect.width / 2;
-
-      const targetCY = screenCY; // SAME horizontal row in center
-
-      const sRestCX = sRect.left + sRect.width / 2;
-      const sRestCY = sRect.top + sRect.height / 2;
-
-      const fRestCX = fRect.left + fRect.width / 2;
-      const fRestCY = fRect.top + fRect.height / 2;
-
+      const totalW   = scaledWs + scaledWf + gap * initialScale;
+      const sInitCX  = screenCX - totalW / 2 + scaledWs / 2;
+      const fInitCX  = screenCX + totalW / 2 - scaledWf / 2;
+      const tW       = sRect.width + fRect.width + gap;
+      const sZoomCX  = screenCX - tW / 2 + sRect.width  / 2;
+      const fZoomCX  = screenCX + tW / 2 - fRect.width  / 2;
+      const cy       = screenCY;
+      const sRCX = sRect.left + sRect.width  / 2;
+      const sRCY = sRect.top  + sRect.height / 2;
+      const fRCX = fRect.left + fRect.width  / 2;
+      const fRCY = fRect.top  + fRect.height / 2;
       return {
         initialScale,
-        shouryaInitial: {
-          x: sInitialCX - sRestCX,
-          y: targetCY - sRestCY,
-        },
-        foundryInitial: {
-          x: fInitialCX - fRestCX,
-          y: targetCY - fRestCY,
-        },
-        shouryaZoomed: {
-          x: sZoomedCX - sRestCX,
-          y: targetCY - sRestCY,
-        },
-        foundryZoomed: {
-          x: fZoomedCX - fRestCX,
-          y: targetCY - fRestCY,
-        },
+        sI: { x: sInitCX - sRCX, y: cy - sRCY },
+        fI: { x: fInitCX - fRCX, y: cy - fRCY },
+        sZ: { x: sZoomCX - sRCX, y: cy - sRCY },
+        fZ: { x: fZoomCX - fRCX, y: cy - fRCY },
       };
     };
 
     const d = getDeltas();
-    const tl = gsap.timeline({ delay: 0.2 });
 
-    // Initial state for Polaroid frame
     if (polaroidRef.current) {
-      gsap.set(polaroidRef.current, {
-        opacity: 0,
-        y: 45,
-        scale: 0.9,
-        rotationZ: -8,
-        filter: 'blur(10px)',
-      });
+      gsap.set(polaroidRef.current, { opacity: 0, y: 45, scale: 0.9, rotationZ: -8, filter: 'blur(10px)' });
     }
 
-    // ── STAGE 1: Reveal Colossal Text in Center (scale 3.2) ────────────────────
-    tl.fromTo(
-      shouryaRef.current,
-      {
-        x: d.shouryaInitial.x,
-        y: d.shouryaInitial.y,
-        scale: d.initialScale,
-        opacity: 0,
-        filter: 'blur(16px)',
-      },
-      {
-        opacity: 1,
-        filter: 'blur(0px)',
-        duration: 1.0,
-        ease: 'power2.out',
-      }
-    );
+    const tl = gsap.timeline({
+      delay: 0.2,
+      onComplete: () => {
+        if (typeof onIntroComplete === 'function') onIntroComplete();
 
-    tl.fromTo(
-      foundryRef.current,
-      {
-        x: d.foundryInitial.x,
-        y: d.foundryInitial.y,
-        scale: d.initialScale,
-        opacity: 0,
-        filter: 'blur(16px)',
+        // ── Wipe GSAP's transform cache so the rAF loop owns the elements ──
+        gsap.killTweensOf([shouryaRef.current, foundryRef.current]);
+        gsap.set(shouryaRef.current, { clearProps: 'x,y,scale,filter' });
+        gsap.set(foundryRef.current, { clearProps: 'x,y,scale,filter' });
+
+        // Wait 2 frames for the DOM write to settle before we start
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            scrollReadyRef.current = true;
+          })
+        );
       },
-      {
-        opacity: 1,
-        filter: 'blur(0px)',
-        duration: 1.0,
-        ease: 'power2.out',
-      },
+    });
+
+    tl.fromTo(shouryaRef.current,
+      { x: d.sI.x, y: d.sI.y, scale: d.initialScale, opacity: 0, filter: 'blur(16px)' },
+      { opacity: 1, filter: 'blur(0px)', duration: 1.0, ease: 'power2.out' }
+    );
+    tl.fromTo(foundryRef.current,
+      { x: d.fI.x, y: d.fI.y, scale: d.initialScale, opacity: 0, filter: 'blur(16px)' },
+      { opacity: 1, filter: 'blur(0px)', duration: 1.0, ease: 'power2.out' },
       '<+=0.04'
     );
-
-    // Brief pause to absorb colossal view
     tl.to({}, { duration: 0.3 });
-
-    // ── STAGE 2: ZOOM OUT IN CENTER FIRST (Do NOT move to corner yet!) ────────
-    tl.to(
-      shouryaRef.current,
-      {
-        x: d.shouryaZoomed.x,
-        y: d.shouryaZoomed.y,
-        scale: 1.0,
-        duration: 2.1,
-        ease: 'power3.inOut',
-      }
-    );
-
-    tl.to(
-      foundryRef.current,
-      {
-        x: d.foundryZoomed.x,
-        y: d.foundryZoomed.y,
-        scale: 1.0,
-        duration: 2.1,
-        ease: 'power3.inOut',
-      },
-      '<'
-    );
-
-    // Hold centered zoomed-out state so viewer sees full "SHOURYA FOUNDRY"
+    tl.to(shouryaRef.current, { x: d.sZ.x, y: d.sZ.y, scale: 1.0, duration: 2.1, ease: 'power3.inOut' });
+    tl.to(foundryRef.current, { x: d.fZ.x, y: d.fZ.y, scale: 1.0, duration: 2.1, ease: 'power3.inOut' }, '<');
     tl.to({}, { duration: 0.6 });
-
-    // ── STAGE 3: REPOSITION TO CORNERS (AFTER Zoom Out completes) ─────────────
-    tl.to(
-      shouryaRef.current,
-      {
-        x: 0,
-        y: 0,
-        duration: 2.2,
-        ease: 'power3.inOut',
-      }
-    );
-
-    tl.to(
-      foundryRef.current,
-      {
-        x: 0,
-        y: 0,
-        duration: 2.2,
-        ease: 'power3.inOut',
-      },
-      '<'
-    );
-
-    // ── STAGE 4: Reveal Polaroid Frame & UI Details ────────────────────────────
-    tl.fromTo(
-      centerTagRef.current,
-      { opacity: 0, y: 16 },
-      { opacity: 0.85, y: 0, duration: 1.1, ease: 'power2.out' },
-      '-=1.2'
-    );
-
+    tl.to(shouryaRef.current, { x: 0, y: 0, duration: 2.2, ease: 'power3.inOut' });
+    tl.to(foundryRef.current, { x: 0, y: 0, duration: 2.2, ease: 'power3.inOut' }, '<');
+    tl.fromTo(centerTagRef.current, { opacity: 0, y: 16 }, { opacity: 0.85, y: 0, duration: 1.1, ease: 'power2.out' }, '-=1.2');
     if (polaroidRef.current) {
-      tl.to(
-        polaroidRef.current,
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1.0,
-          rotationZ: -3.5,
-          filter: 'blur(0px)',
-          duration: 1.35,
-          ease: 'power3.out',
-        },
-        '-=1.0'
-      );
+      tl.to(polaroidRef.current, { opacity: 1, y: 0, scale: 1.0, rotationZ: -3.5, filter: 'blur(0px)', duration: 1.35, ease: 'power3.out' }, '-=1.0');
     }
+    tl.fromTo(footerRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 1.1, ease: 'power2.out' }, '-=0.9');
 
-    tl.fromTo(
-      footerRef.current,
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 1.1, ease: 'power2.out' },
-      '-=0.9'
-    );
   }, { scope: containerRef });
 
-  // Subtle Interactive Mouse Parallax for Polaroid
+  /* ═══════════════════════════════════════════════════════════════
+     PHASE 2 — Scroll: shrink & move when scrolled down
+     Pure DOM rAF loop — zero GSAP state conflicts.
+
+     SHOURYA (already top-left):
+       transform-origin: top left  →  just scale down, stays pinned
+
+     FOUNDRY (bottom-right):
+       translate to top-left corner + scale down simultaneously
+       target top-left corner = (SHOURYA.left + SHOURYA.w*TARGET + gap, SHOURYA.top)
+  ═══════════════════════════════════════════════════════════════ */
+  useEffect(() => {
+    const TARGET  = 0.13;   // final scale factor
+    const GAP_PX  = 8;      // gap between words in mini state
+
+    let initialized = false;
+    let heroH = 0, fDx = 0, fDy = 0;
+    let rafId;
+
+    const tick = () => {
+      rafId = requestAnimationFrame(tick);
+
+      if (!scrollReadyRef.current) return;
+
+      const sEl = shouryaRef.current;
+      const fEl = foundryRef.current;
+      if (!sEl || !fEl) return;
+
+      // ── One-time init: capture natural resting rects ────────────
+      if (!initialized) {
+        const sRect = sEl.getBoundingClientRect();
+        const fRect = fEl.getBoundingClientRect();
+        heroH = containerRef.current?.offsetHeight ?? window.innerHeight;
+
+        // Target position for FOUNDRY's top-left corner:
+        //   x: just after SHOURYA's scaled-down right edge
+        //   y: same row as SHOURYA's top edge
+        const fEndLeft = sRect.left + sRect.width * TARGET + GAP_PX;
+        const fEndTop  = sRect.top;
+
+        fDx = fEndLeft - fRect.left;   // will be a large negative number
+        fDy = fEndTop  - fRect.top;    // will be a large negative number
+
+        // Pin transform origins to top-left so scaling doesn't drift
+        sEl.style.transformOrigin = 'top left';
+        fEl.style.transformOrigin = 'top left';
+
+        initialized = true;
+      }
+
+      // ── Scroll progress 0 → 1 as hero scrolls through viewport ─
+      const p = Math.min(Math.max(window.scrollY / heroH, 0), 1);
+
+      // Scale: 1.0 at p=0, TARGET at p=1
+      const s = 1 - p * (1 - TARGET);
+
+      // ── Apply transforms (no GSAP — pure inline style) ─────────
+      sEl.style.transform = `scale(${s})`;
+      fEl.style.transform = `translate(${fDx * p}px, ${fDy * p}px) scale(${s})`;
+
+      // ── Pixel vanishing effect on the image ─────────────────────
+      if (pixelVanishRef.current) {
+        pixelVanishRef.current.setProgress(p);
+      }
+
+      // ── Fade out secondary elements as hero scrolls away ────────
+      const fade = Math.max(1 - p * 2.5, 0);
+      if (footerRef.current)    footerRef.current.style.opacity    = fade;
+      if (centerTagRef.current) centerTagRef.current.style.opacity = fade * 0.85;
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, []);
+
   const handleMouseMove = (e) => {
     if (!polaroidRef.current) return;
-    const { clientX, clientY } = e;
-    const cx = window.innerWidth / 2;
-    const cy = window.innerHeight / 2;
-    const dx = (clientX - cx) / cx;
-    const dy = (clientY - cy) / cy;
-
+    const dx = (e.clientX - window.innerWidth  / 2) / (window.innerWidth  / 2);
+    const dy = (e.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
     gsap.to(polaroidRef.current, {
-      x: dx * -14,
-      y: dy * -14,
-      rotationZ: -3.5 + (dx * -2.5),
-      duration: 0.9,
-      ease: 'power2.out',
+      x: dx * -14, y: dy * -14, rotationZ: -3.5 + dx * -2.5,
+      duration: 0.9, ease: 'power2.out',
     });
   };
 
   return (
     <section className="oviedo-hero-root" ref={containerRef} onMouseMove={handleMouseMove}>
-      {/* Fine Film Grain Canvas */}
-      <GrainCanvas opacity={0.16} fps={24} />
+        <GrainCanvas opacity={0.16} fps={24} />
 
-      {/* 1. Top-Left Display Name: "SHOURYA" */}
-      <div className="oviedo-text-block block-shourya" ref={shouryaRef}>
-        <h1 className="oviedo-wordmark">SHOURYA</h1>
-      </div>
-
-      {/* 2. CENTER: Large Hollow // Mark */}
-      <div className="oviedo-center-tag" ref={centerTagRef}>
-        <div className="hollow-slashes-center" aria-hidden="true">
-          <svg width="108" height="72" viewBox="0 0 108 72" fill="none">
-            <path
-              d="M 22 6 L 38 6 L 18 66 L 2 66 Z"
-              fill="none"
-              stroke="#ad7b73"
-              strokeWidth="2.6"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M 64 6 L 80 6 L 60 66 L 44 66 Z"
-              fill="none"
-              stroke="#ad7b73"
-              strokeWidth="2.6"
-              strokeLinejoin="round"
-            />
-          </svg>
+        <div className="oviedo-text-block block-shourya" ref={shouryaRef}>
+          <SliceDisplacementText text="SHOURYA" />
         </div>
-      </div>
 
-      {/* 3. BOTTOM LEFT CORNER: Dark Mono Photo Card with Cybernetic Duotone Glitch & HUD Reticles */}
-      <div className="hero-solid-photo-card" ref={polaroidRef}>
-        {/* Base B&W Photo */}
-        <img
-          src="/images/hero-2.png"
-          alt="Monochromatic Portrait"
-          className="hero-solid-mono-img base-img"
-        />
-
-        {/* Glitch Slice Layer 1 (Terracotta Offset Shift) */}
-        <img
-          src="/images/hero-2.png"
-          alt=""
-          className="hero-solid-mono-img glitch-slice glitch-slice-1"
-          aria-hidden="true"
-        />
-
-        {/* Glitch Slice Layer 2 (High-Contrast Inverted Split) */}
-        <img
-          src="/images/hero-2.png"
-          alt=""
-          className="hero-solid-mono-img glitch-slice glitch-slice-2"
-          aria-hidden="true"
-        />
-
-        {/* Noise & Vignette Overlays */}
-        <div className="card-grain-overlay" />
-        <div className="card-vignette" />
-      </div>
-
-      {/* 4. Bottom-Right Display Name: "FOUNDRY" */}
-      <div className="oviedo-text-block block-foundry" ref={foundryRef}>
-        <h1 className="oviedo-wordmark">FOUNDRY</h1>
-      </div>
-
-      {/* 5. Footer Metadata */}
-      <footer className="oviedo-footer" ref={footerRef}>
-        <div className="footer-left font-mono">
-          <span>© 2026 SHOURYA FOUNDRY</span>
+        <div className="oviedo-center-tag" ref={centerTagRef}>
+          <div className="hollow-slashes-center" aria-hidden="true">
+            <svg width="108" height="72" viewBox="0 0 108 72" fill="none">
+              <path d="M 22 6 L 38 6 L 18 66 L 2 66 Z" fill="none" stroke="#ad7b73" strokeWidth="2.6" strokeLinejoin="round" />
+              <path d="M 64 6 L 80 6 L 60 66 L 44 66 Z" fill="none" stroke="#ad7b73" strokeWidth="2.6" strokeLinejoin="round" />
+            </svg>
+          </div>
         </div>
-        <div className="footer-right font-mono">
-          <span>AVAILABLE FOR COLLABORATIONS</span>
+
+        <div className="hero-solid-photo-card" ref={polaroidRef}>
+          <PixelVanishingImage ref={pixelVanishRef} src="/images/hero-2.png" alt="Monochromatic Portrait" />
         </div>
-      </footer>
-    </section>
+
+        <div className="oviedo-text-block block-foundry" ref={foundryRef}>
+          <SliceDisplacementText text="FOUNDRY" />
+        </div>
+
+        <footer className="oviedo-footer" ref={footerRef}>
+          <div className="footer-left font-mono"><span>© 2026 SHOURYA FOUNDRY</span></div>
+          <div className="footer-right font-mono"><span>AVAILABLE FOR COLLABORATIONS</span></div>
+        </footer>
+      </section>
   );
 }
-
-

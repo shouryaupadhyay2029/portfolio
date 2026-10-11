@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import SmoothScroll from './components/SmoothScroll/SmoothScroll';
+
 import BlockNavigation from './components/BlockNavigation/BlockNavigation';
 import SynapserHero from './components/SynapserHero/SynapserHero';
 import ManifestoShowreel from './components/ManifestoShowreel/ManifestoShowreel';
@@ -11,17 +12,19 @@ import ContactFooter from './components/ContactFooter/ContactFooter';
  * FOUNDRY — Exact Synapser Studio Hero Replica & Awwwards Architecture
  */
 export default function App() {
+  const [heroReady, setHeroReady] = useState(false);
+
   return (
-    <SmoothScroll>
+    <SmoothScroll isLocked={!heroReady}>
       <div className="relative w-full overflow-x-hidden select-none bg-[#dcd8c0]">
         {/* Kyma-Style Staggered Block Curtain Navigation & Hamburger */}
         <BlockNavigation />
 
         {/* 1. Exact Synapser Studio Hero Replica */}
-        <SynapserHero />
+        <SynapserHero onIntroComplete={() => setHeroReady(true)} />
 
         {/* 2. Manifesto & Showreel: Line-by-Line Scrub & Expanding Video Stage */}
-        <ManifestoShowreel />
+        <ManifestoShowreel isHeroReady={heroReady} />
 
         {/* 3. Selected Works: Interactive Stage Showcase */}
         <SelectedWorksShowcase />

@@ -1,0 +1,22 @@
+/* ═══════════════════════════════════════════════════════════════
+   PixelScrollTransition.css — Paul Kalkbrenner Pixel Scroll Curtain
+   ═══════════════════════════════════════════════════════════════ */
+
+.pixel-transition-anchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 25;
+  overflow: visible;
+}
+
+.pixel-transition-canvas {
+  position: absolute;
+  bottom: 0; /* Bottom edge aligns with the top boundary of incoming section */
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  display: block;
+}

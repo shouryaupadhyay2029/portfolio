@@ -3,108 +3,171 @@
    Palette: Dark Charcoal #1c1917 · Warm Terracotta #ad7b73 · Cream #f3eee3
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── 1. Top-Right Fixed Floating Hamburger Button (Icon Only) ── */
+/* ── 1. Top-Right Fixed Floating Hamburger Button ────────────── */
 .kyma-burger-btn {
   position: fixed;
   top: 2.2rem;
   right: 3.5rem;
   z-index: 10000;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%; /* Circular Icon Button */
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(243, 238, 227, 0.88);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1.5px solid rgba(173, 123, 115, 0.45);
+  background: rgba(243, 238, 227, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(173, 123, 115, 0.35);
   color: #ad7b73;
   cursor: pointer;
   user-select: none;
-  box-shadow: 0 8px 25px rgba(44, 40, 37, 0.08);
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+  box-shadow:
+    0 6px 22px rgba(44, 40, 37, 0.07),
+    0 0 0 0px rgba(173, 123, 115, 0);
+  transition:
+    background 0.4s ease,
+    border-color 0.4s ease,
+    box-shadow 0.5s ease;
+  outline: none;
 }
 
-/* Outer Aura Pulse Ring */
-.burger-aura-ring {
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(173, 123, 115, 0.5);
-  opacity: 0;
-  transform: scale(0.85);
-  pointer-events: none;
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
-}
+/* ══════════════════════════════════════════════════════════════
+   Burger Icon — Premium Horizontal Lines
+   ══════════════════════════════════════════════════════════════
 
-/* Unique Hover Physics */
-.kyma-burger-btn:hover {
-  transform: scale(1.12) rotate(90deg); /* 90deg Orbital Spring Spin */
-  background: rgba(243, 238, 227, 0.98);
-  border-color: #ad7b73;
-  box-shadow: 0 12px 35px rgba(173, 123, 115, 0.28);
-}
+   Resting  : ≡ three horizontal lines, middle line slightly shorter + offset
+   Hover    : staggered elastic shimmy — top slides left, bottom slides right,
+              middle snaps to full width (tension→release spring feel)
+   Open     : warp-morph into × — top/bottom lines glide to center and rotate,
+              middle fades with a subtle scale burst
+*/
 
-.kyma-burger-btn:hover .burger-aura-ring {
-  opacity: 1;
-  transform: scale(1.18);
-  animation: burger-pulse-ring 1.4s ease-out infinite;
-}
-
-@keyframes burger-pulse-ring {
-  0%   { transform: scale(1.0); opacity: 0.8; }
-  50%  { transform: scale(1.28); opacity: 0.2; }
-  100% { transform: scale(1.0); opacity: 0.8; }
-}
-
-/* Icon Lines Micro-Physics */
 .burger-icon {
   position: relative;
-  width: 20px;
-  height: 12px;
+  width: 22px;
+  height: 18px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  overflow: visible;
 }
 
+/* ── Base line styles ─────────────────────────────────────────── */
 .burger-icon .line {
   display: block;
-  width: 100%;
   height: 2px;
-  background-color: currentColor;
   border-radius: 2px;
-  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s ease;
-  transform-origin: center;
+  background-color: currentColor;
+  transform-origin: center center;
+  flex-shrink: 0;
+  transition:
+    transform  0.52s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity    0.32s ease,
+    width      0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, opacity, width;
 }
 
-.kyma-burger-btn:hover .line-1 {
-  transform: translateX(3px) scaleX(1.1);
+.burger-icon .line-top { width: 22px; }
+.burger-icon .line-mid { width: 14px; align-self: flex-end; }
+.burger-icon .line-bot { width: 22px; }
+
+/* ── Hover: staggered spring shimmy ──────────────────────────── */
+.kyma-burger-btn:not(.is-open):hover .line-top {
+  animation: shimmy-top 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.kyma-burger-btn:not(.is-open):hover .line-mid {
+  animation: shimmy-mid 0.6s 0.05s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.kyma-burger-btn:not(.is-open):hover .line-bot {
+  animation: shimmy-bot 0.6s 0.10s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-.kyma-burger-btn:hover .line-2 {
-  transform: translateX(-3px) scaleX(1.1);
+/* Top slides left with spring overshoot */
+@keyframes shimmy-top {
+  0%   { transform: translateX(0); }
+  30%  { transform: translateX(-7px); }
+  55%  { transform: translateX(2px); }
+  75%  { transform: translateX(-1.5px); }
+  100% { transform: translateX(0); }
 }
 
-/* Open State (Cross X Morph) */
+/* Middle snaps out to full width then retracts */
+@keyframes shimmy-mid {
+  0%   { width: 14px; opacity: 1; }
+  25%  { width: 22px; opacity: 1; }
+  60%  { width: 16px; opacity: 1; }
+  100% { width: 14px; opacity: 1; }
+}
+
+/* Bottom slides right with spring overshoot */
+@keyframes shimmy-bot {
+  0%   { transform: translateX(0); }
+  30%  { transform: translateX(7px); }
+  55%  { transform: translateX(-2px); }
+  75%  { transform: translateX(1.5px); }
+  100% { transform: translateX(0); }
+}
+
+/* Button-level hover glow */
+.kyma-burger-btn:not(.is-open):hover {
+  border-color: rgba(173, 123, 115, 0.7);
+  box-shadow:
+    0 8px 28px rgba(44, 40, 37, 0.1),
+    0 0 0 4px rgba(173, 123, 115, 0.1);
+}
+
+/* ── OPEN STATE: warp-morph into × ───────────────────────────── */
 .kyma-burger-btn.is-open {
   background: #1c1917;
   color: #f3eee3;
-  border-color: rgba(243, 238, 227, 0.35);
-  transform: rotate(180deg);
+  border-color: rgba(243, 238, 227, 0.2);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* Top line: slides down to center and rotates 45° */
+.kyma-burger-btn.is-open .line-top {
+  width: 22px;
+  transform: translateY(8px) rotate(45deg);
+  animation: none !important;
+}
+
+/* Middle line: evaporates with a scale burst */
+.kyma-burger-btn.is-open .line-mid {
+  width: 22px;
+  opacity: 0;
+  transform: scaleX(0);
+  animation: none !important;
+  pointer-events: none;
+}
+
+/* Bottom line: slides up to center and rotates -45° */
+.kyma-burger-btn.is-open .line-bot {
+  width: 22px;
+  transform: translateY(-8px) rotate(-45deg);
+  animation: none !important;
+}
+
+/* Subtle rotation on hovering the × (signals "close") */
+.kyma-burger-btn.is-open:hover .line-top,
+.kyma-burger-btn.is-open:hover .line-bot {
+  transition: transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.kyma-burger-btn.is-open:hover .line-top {
+  transform: translateY(8px) rotate(48deg);
+}
+
+.kyma-burger-btn.is-open:hover .line-bot {
+  transform: translateY(-8px) rotate(-48deg);
 }
 
 .kyma-burger-btn.is-open:hover {
-  transform: scale(1.12) rotate(270deg);
+  border-color: rgba(243, 238, 227, 0.4);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
 }
 
-.kyma-burger-btn.is-open .line-1 {
-  transform: translateY(5px) rotate(45deg);
-}
 
-.kyma-burger-btn.is-open .line-2 {
-  transform: translateY(-5px) rotate(-45deg);
-}
 
 /* ── 2. Full-Screen Overlay Container ────────────────────────── */
 .kyma-menu-overlay {
@@ -134,13 +197,13 @@
   box-sizing: border-box;
 }
 
-/* All 4 Sliding Block Columns — Uniform Premium Blood Red */
+/* All 4 Sliding Block Columns — Vibrant Premium Editorial Bright Red */
 .kyma-block-col.col-1,
 .kyma-block-col.col-2,
 .kyma-block-col.col-3,
 .kyma-block-col.col-4 {
-  background-color: #8a0e1a; /* Uniform Premium Solid Blood Red */
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #e31b2c; /* Electric Luxury Swiss Bright Red */
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 /* ── 4. Menu Content Layer ───────────────────────────────────── */
@@ -175,8 +238,7 @@
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   letter-spacing: 0.22em;
-  color: #ffc2b8;
-  opacity: 0.85;
+  color: rgba(255, 255, 255, 0.75);
   text-transform: uppercase;
 }
 
@@ -194,15 +256,14 @@
   align-items: baseline;
   gap: 1.2rem;
   text-decoration: none;
-  color: #f3eee3;
+  color: #ffffff;
   transition: color 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nav-num {
   font-family: 'IBM Plex Mono', monospace;
   font-size: clamp(12px, 1.2vw, 16px);
-  color: #ffc2b8;
-  opacity: 0.85;
+  color: rgba(255, 255, 255, 0.65);
   letter-spacing: 0.12em;
 }
 
@@ -215,8 +276,9 @@
 }
 
 .kyma-nav-item a:hover {
-  color: #ffc2b8;
+  color: #ffffff;
   transform: translateX(14px);
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
 }
 
 /* ── Cyber Glitch Hover Animation Rules ──────────────────────── */
@@ -246,13 +308,13 @@
 }
 
 .kyma-nav-item a:hover .glitch-red {
-  color: #ff6b6b;
+  color: #ff9999;
   animation: glitch-anim-1 0.35s steps(2, start) infinite;
   clip-path: polygon(0 0, 100% 0, 100% 40%, 0 40%);
 }
 
 .kyma-nav-item a:hover .glitch-blue {
-  color: #f3eee3;
+  color: #ffffff;
   animation: glitch-anim-2 0.35s steps(2, start) infinite;
   clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
 }
@@ -271,75 +333,39 @@
   100% { transform: translate(0, 0) skewX(0); }
 }
 
-/* Right Metadata Column */
-.kyma-meta-column {
+/* Right Cartoon Video Showcase Column */
+.kyma-video-column {
   display: flex;
-  flex-direction: column;
-  gap: 2.2rem;
-  border-left: 1px solid rgba(255, 255, 255, 0.15);
-  padding-left: 3rem;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+  padding-left: 1.5rem;
+  box-sizing: border-box;
 }
 
-.meta-block {
+.kyma-cartoon-wrapper {
+  position: relative;
+  width: clamp(170px, 20vw, 280px);
+  aspect-ratio: 1 / 1;
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  transform: translateX(-18px);
 }
 
-.meta-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10.5px;
-  letter-spacing: 0.22em;
-  color: #ffc2b8;
-  opacity: 0.85;
-  text-transform: uppercase;
-}
-
-.meta-value {
-  font-family: 'General Sans', sans-serif;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: #f3eee3;
-  line-height: 1.4;
-  margin: 0;
-  opacity: 0.95;
-}
-
-.social-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.2rem;
-}
-
-.social-list a {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11.5px;
-  letter-spacing: 0.14em;
-  color: #f3eee3;
-  text-decoration: none;
-  opacity: 0.85;
-  transition: opacity 0.25s ease, color 0.25s ease;
-}
-
-.social-list a:hover {
-  opacity: 1;
-  color: #ffc2b8;
-}
-
-.email-link {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  color: #ffc2b8;
-  text-decoration: none;
-  transition: opacity 0.25s ease;
-}
-
-.email-link:hover {
-  opacity: 0.7;
+.kyma-cartoon-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  /* Seamlessly remove white background: multiply against bright red eliminates white completely */
+  mix-blend-mode: multiply;
+  filter: contrast(1.1) brightness(1.02);
+  pointer-events: none;
+  user-select: none;
 }
 
 /* Responsive Styles */
@@ -354,10 +380,14 @@
     gap: 2.5rem;
   }
 
-  .kyma-meta-column {
+  .kyma-video-column {
     border-left: none;
     padding-left: 0;
-    border-top: 1px solid rgba(173, 123, 115, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
     padding-top: 2rem;
+  }
+
+  .kyma-cartoon-wrapper {
+    width: clamp(140px, 42vw, 210px);
   }
 }

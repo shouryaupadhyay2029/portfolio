@@ -145,11 +145,12 @@ export default function BlockNavigation() {
         );
       }
     } else {
-      // ── CLOSE SEQUENCE: Links fade, Blocks slide DOWN staggered ──────────
+      // ── CLOSE SEQUENCE: Links fade, Blocks slide UP (exit upwards) ──────────
       document.body.style.overflow = '';
       const tl = gsap.timeline({
         onComplete: () => {
           gsap.set(overlay, { display: 'none' });
+          gsap.set(blocks, { yPercent: 100 }); // reset offscreen below for next open
         },
       });
 
@@ -161,14 +162,14 @@ export default function BlockNavigation() {
         ease: 'power2.in',
       });
 
-      // 2. Column blocks slide DOWN staggered in reverse
+      // 2. Column blocks slide UP staggered
       tl.to(
         blocks,
         {
-          yPercent: 100,
+          yPercent: -100,
           duration: 0.75,
           ease: 'power4.inOut',
-          stagger: { amount: 0.2, from: 'end' },
+          stagger: 0.06,
         },
         '-=0.15'
       );
@@ -195,10 +196,10 @@ export default function BlockNavigation() {
         aria-label={isOpen ? 'Close Menu' : 'Open Navigation Menu'}
         aria-expanded={isOpen}
       >
-        <span className="burger-aura-ring" aria-hidden="true" />
         <div className="burger-icon" aria-hidden="true">
-          <span className="line line-1" />
-          <span className="line line-2" />
+          <span className="line line-top" />
+          <span className="line line-mid" />
+          <span className="line line-bot" />
         </div>
       </button>
 
@@ -236,33 +237,18 @@ export default function BlockNavigation() {
               </ul>
             </div>
 
-            {/* Right Meta Column */}
-            <div className="kyma-meta-column" ref={metaRef}>
-              <div className="meta-block">
-                <span className="meta-label font-mono">ROLE // ARCHITECTURE</span>
-                <p className="meta-value">CREATIVE FRONTEND ENGINEER & MOTION DESIGNER</p>
-              </div>
-
-              <div className="meta-block">
-                <span className="meta-label font-mono">LOCATION // BASE</span>
-                <p className="meta-value">BANGALORE, KARNATAKA, IN</p>
-              </div>
-
-              <div className="meta-block">
-                <span className="meta-label font-mono">CONNECT // SOCIALS</span>
-                <ul className="social-list font-mono" role="list">
-                  <li><a href="https://github.com" target="_blank" rel="noreferrer">GITHUB ↗</a></li>
-                  <li><a href="https://linkedin.com" target="_blank" rel="noreferrer">LINKEDIN ↗</a></li>
-                  <li><a href="https://twitter.com" target="_blank" rel="noreferrer">TWITTER / X ↗</a></li>
-                  <li><a href="https://awwwards.com" target="_blank" rel="noreferrer">AWWWARDS ↗</a></li>
-                </ul>
-              </div>
-
-              <div className="meta-block">
-                <span className="meta-label font-mono">INQUIRIES // DIRECT</span>
-                <a href="mailto:shourya.upadhyay@foundry.dev" className="email-link font-mono">
-                  SHOURYA.UPADHYAY@FOUNDRY.DEV
-                </a>
+            {/* Right Cartoon Video Showcase Column */}
+            <div className="kyma-video-column" ref={metaRef}>
+              <div className="kyma-cartoon-wrapper">
+                <video
+                  src="/LOGO2.webm"
+                  autoPlay
+                  muted
+                  playsInline
+                  loop
+                  preload="auto"
+                  className="kyma-cartoon-video"
+                />
               </div>
             </div>
 

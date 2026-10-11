@@ -7,7 +7,6 @@ import ManifestoScene from '../ManifestoScene/ManifestoScene';
 import AboutScene from '../AboutScene/AboutScene';
 import ContactScene from '../ContactScene/ContactScene';
 import ProjectCard from '../WorksScene/ProjectCard';
-import BootSequence from '../BootSequence/BootSequence';
 
 // ─────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -980,9 +979,6 @@ export default function RevealLensContainer() {
           ))}
         </div>
       </div>
-
-      {/* ── BOOT SEQUENCE ── */}
-      <BootSequence currentPos={currentPos} currentSize={currentSize} />
     </div>
   );
 }

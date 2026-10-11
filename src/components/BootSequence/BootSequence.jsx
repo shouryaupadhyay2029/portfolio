@@ -1,206 +1,212 @@
 import React, { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import BootShader from './BootShader';
 import './BootSequence.css';
 
 gsap.registerPlugin(useGSAP);
 
+/**
+ * BootSequence — Cinematic Video Intro
+ *
+ * Layout:  [LOGO1] / [LOGO2] / [LOGO3]
+ *          three cartoon videos, side by side, white bg removed via mix-blend-mode
+ *          separated by two outlined SVG "/" marks (same style as hero)
+ *
+ * Timeline:
+ *  0.0s  — Screen is cream, all elements invisible
+ *  0.3s  — Slashes draw themselves (stroke-dashoffset)
+ *  0.6s  — Videos fade in staggered, scale up
+ *  3.5s  — Videos & outer slashes fade out, scale
+ *  4.2s  — The two slashes merge together (translateX toward each other)
+ *  4.8s  — Merged slashes shrink + descend to center of screen (hero position)
+ *  5.4s  — Full screen fades out → boot complete
+ */
 export default function BootSequence({ currentPos, currentSize }) {
   const [bootComplete, setBootComplete] = React.useState(false);
-  const rootRef = useRef(null);
-  const shaderRef = useRef(null);
-  const slashContainerRef = useRef(null);
-  const shouryaLineRef = useRef(null);
-  const foundryLineRef = useRef(null);
 
-  // Sticker refs
-  const stickerWrappers = useRef([]);
-  const stickerInners = useRef([]);
+  const rootRef        = useRef(null);
+  const slashGroupRef  = useRef(null); // the whole slash+video assembly
+  const slash1Ref      = useRef(null); // left "/" (between v1 and v2)
+  const slash2Ref      = useRef(null); // right "/" (between v2 and v3)
+  const video1WrapRef  = useRef(null);
+  const video2WrapRef  = useRef(null);
+  const video3WrapRef  = useRef(null);
 
   useGSAP(() => {
-    // Master timeline
-    const tl = gsap.timeline();
+    const root       = rootRef.current;
+    const slashGroup = slashGroupRef.current;
+    const slash1     = slash1Ref.current;
+    const slash2     = slash2Ref.current;
+    const v1         = video1WrapRef.current;
+    const v2         = video2WrapRef.current;
+    const v3         = video3WrapRef.current;
 
-    // 1. 0.00s: Boot shader background fades in over 600ms
-    if (shaderRef.current) {
-      tl.to(shaderRef.current, {
-        opacity: 1,
-        duration: 0.6,
-        ease: 'power2.inOut'
-      }, 0.0);
+    if (!root || !slashGroup) return;
+
+    // ── INIT: everything hidden ─────────────────────────────────
+    gsap.set([v1, v2, v3], { opacity: 0, scale: 0.82, filter: 'blur(8px)' });
+    gsap.set([slash1, slash2], { opacity: 0 });
+    const lines1 = slash1 ? Array.from(slash1.querySelectorAll('.boot-slash-path')) : [];
+    const lines2 = slash2 ? Array.from(slash2.querySelectorAll('.boot-slash-path')) : [];
+    if (lines1.length || lines2.length) {
+      gsap.set([...lines1, ...lines2], { strokeDashoffset: 120 });
     }
 
-    // 2. 0.90s (0.60 + 0.30 pause): Stickers Enter
-    const stickersEnterStart = 0.90;
-    
-    // Reset sticker positions for fromTo and set idle animations
-    stickerWrappers.current.forEach((wrapper, idx) => {
-      // Entrance Animation
-      tl.fromTo(wrapper,
-        { opacity: 0, y: 16, scale: 0.88, rotation: (Math.random() > 0.5 ? 4 : -4) },
-        { 
-          opacity: 1, 
-          y: 0, 
-          scale: 1,
-          rotation: 0,
-          duration: 0.8, 
-          ease: 'power3.out' 
-        },
-        stickersEnterStart + (idx * 0.25)
-      );
+    const tl = gsap.timeline();
 
-      // Idle animations (almost imperceptible)
-      if (idx === 0) {
-        // Sticker 1: tiny breathing scale
-        gsap.to(stickerInners.current[0], {
-          scale: 1.015,
-          duration: 4,
-          ease: 'sine.inOut',
-          yoyo: true,
-          repeat: -1,
-          delay: stickersEnterStart + 0.8
-        });
-      } else if (idx === 1) {
-        // Sticker 2: slow floating
-        gsap.to(stickerInners.current[1], {
-          y: '+=6',
-          duration: 5,
-          ease: 'sine.inOut',
-          yoyo: true,
-          repeat: -1,
-          delay: stickersEnterStart + 0.8
-        });
-      } else if (idx === 2) {
-        // Sticker 3: tiny 2° rotation
-        gsap.to(stickerInners.current[2], {
-          rotation: '+=2',
-          duration: 6,
-          ease: 'sine.inOut',
-          yoyo: true,
-          repeat: -1,
-          delay: stickersEnterStart + 0.8
-        });
-      }
-    });
+    // ── ACT 1: Slashes draw in (stroke animation) ───────────────
+    tl.to([slash1, slash2], {
+      opacity: 1,
+      duration: 0.25,
+      ease: 'power2.out',
+    }, 0.3);
 
-    // Sticker 3 enters at 1.40s, finishes around 2.20s.
-    // 600ms pause -> 2.80s
-    const typographyStart = 2.80;
-
-    // 3. 2.80s: Outlined "//" draws itself
-    const lines = slashContainerRef.current.querySelectorAll('.boot-slash-line');
-    tl.to(lines, {
+    tl.to([...lines1, ...lines2], {
       strokeDashoffset: 0,
-      duration: 0.8,
-      ease: 'power2.inOut'
-    }, typographyStart);
+      duration: 0.7,
+      ease: 'power2.inOut',
+      stagger: 0.04,
+    }, 0.3);
 
-    // 4. 3.60s: SHOURYA reveals
-    tl.to(shouryaLineRef.current, {
-      clipPath: 'inset(0 0% 0 0)',
-      duration: 1.0,
-      ease: 'power3.inOut'
-    }, typographyStart + 0.80);
+    // ── ACT 2: Videos rise in (staggered, scale from 0.82→1) ────
+    tl.to(v1, {
+      opacity: 1, scale: 1, filter: 'blur(0px)',
+      duration: 0.75, ease: 'power3.out',
+    }, 0.6);
 
-    // 5. 4.40s: FOUNDRY reveals
-    tl.to(foundryLineRef.current, {
-      clipPath: 'inset(0 0% 0 0)',
-      duration: 1.0,
-      ease: 'power3.inOut'
-    }, typographyStart + 1.60);
+    tl.to(v2, {
+      opacity: 1, scale: 1, filter: 'blur(0px)',
+      duration: 0.75, ease: 'power3.out',
+    }, 0.72);
 
-    // Typography finishes at 5.40s.
-    const overlayShrinkStart = 5.40;
+    tl.to(v3, {
+      opacity: 1, scale: 1, filter: 'blur(0px)',
+      duration: 0.75, ease: 'power3.out',
+    }, 0.84);
 
-    // 6. Overlay shrinks into lens
-    tl.to(rootRef.current, {
-      duration: 1.2,
+    // ── HOLD: videos play for ~2.5s ─────────────────────────────
+    // (nothing to animate — just let them play)
+
+    // ── ACT 3: Videos fade out + scale down ─────────────────────
+    tl.to([v1, v3], {
+      opacity: 0, scale: 0.78, filter: 'blur(6px)',
+      duration: 0.55, ease: 'power3.in',
+    }, 3.5);
+
+    tl.to(v2, {
+      opacity: 0, scale: 0.78, filter: 'blur(6px)',
+      duration: 0.55, ease: 'power3.in',
+    }, 3.58);
+
+    // ── ACT 4: Slashes collapse together ────────────────────────
+    // slash1 (left slash) moves RIGHT, slash2 (right slash) moves LEFT
+    tl.to(slash1, {
+      x: 22,
+      duration: 0.55,
       ease: 'power3.inOut',
-      onUpdate: function() {
-        const p = this.progress();
-        
-        // Fullscreen bounds
-        const fullW = window.innerWidth;
-        const fullH = window.innerHeight;
-        const fullCx = fullW / 2;
-        const fullCy = fullH / 2;
+    }, 4.0);
 
-        // Lens bounds (dynamically read from RevealLensContainer's refs)
-        const targetCx = currentPos.current.x;
-        const targetCy = currentPos.current.y;
-        
-        // Prevent strictly 0 scale (0.01 minimum for GSAP stability)
-        const proxyP = Math.max(0.01, currentSize.current.proximity);
-        const targetW = currentSize.current.w * proxyP;
-        const targetH = currentSize.current.h * proxyP;
-        const targetR = (currentSize.current.w / 120) * currentSize.current.r * proxyP;
+    tl.to(slash2, {
+      x: -22,
+      duration: 0.55,
+      ease: 'power3.inOut',
+    }, 4.0);
 
-        // Lerp bounds
-        const currentW = fullW * (1 - p) + targetW * p;
-        const currentH = fullH * (1 - p) + targetH * p;
-        const currentCx = fullCx * (1 - p) + targetCx * p;
-        const currentCy = fullCy * (1 - p) + targetCy * p;
+    // ── ACT 5: Merged group scales down + moves to hero position ─
+    // The hero's oviedo-center-tag is at 50%/50% of the page.
+    // We animate the whole slashGroup to shrink and re-center
+    tl.to(slashGroup, {
+      scale: 0.48,
+      duration: 0.5,
+      ease: 'power3.inOut',
+    }, 4.52);
 
-        const finalTop = currentCy - currentH / 2;
-        const finalLeft = currentCx - currentW / 2;
-        const finalBottom = fullH - (currentCy + currentH / 2);
-        const finalRight = fullW - (currentCx + currentW / 2);
-        const finalR = targetR * p;
-
-        // Apply clip path dynamically to simulate physical scale
-        rootRef.current.style.clipPath = `inset(${finalTop}px ${finalRight}px ${finalBottom}px ${finalLeft}px round ${finalR}px)`;
-      },
+    // ── ACT 6: Full screen fades out ────────────────────────────
+    tl.to(root, {
+      opacity: 0,
+      duration: 0.7,
+      ease: 'power2.inOut',
       onComplete: () => {
-        // Overlay is cleanly hidden, revealing the real lens and page
-        if (rootRef.current) rootRef.current.style.display = 'none';
+        if (root) root.style.display = 'none';
         setBootComplete(true);
-      }
-    }, 7.10);
+      },
+    }, 5.1);
 
   }, { scope: rootRef });
 
   if (bootComplete) return null;
 
   return (
-    <div className="boot-sequence-root" ref={rootRef}>
-      {/* Premium WebGL Wave Shader Background (Classy Orange) */}
-      <BootShader ref={shaderRef} className="boot-shader-canvas" style={{ opacity: 0 }} />
+    <div className="boot-root" ref={rootRef}>
+      {/* Grain texture overlay */}
+      <div className="boot-grain" aria-hidden="true" />
 
-      {/* True Centred Composition */}
-      <div className="boot-centered-layout">
-        <h1 className="boot-wordmark">
-          <div className="boot-line-shourya select-none" ref={shouryaLineRef}>
-            SHOURYA
-          </div>
+      {/* Central composition: [Video1] / [Video2] / [Video3] */}
+      <div className="boot-stage" ref={slashGroupRef}>
 
-          <div className="boot-axis-row">
-            {/* CNC SVG Engraving for // */}
-            <span className="boot-slash-container" aria-hidden="true" ref={slashContainerRef}>
-              <svg className="boot-slash-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <line x1="30" y1="100" x2="55" y2="0" className="boot-slash-line" />
-                <line x1="50" y1="100" x2="75" y2="0" className="boot-slash-line" />
-              </svg>
-            </span>
-
-            <span className="boot-line-foundry select-none" ref={foundryLineRef}>
-              FOUNDRY
-            </span>
-          </div>
-        </h1>
-      </div>
-
-      {/* Premium Sticker Layer */}
-      <div className="boot-stickers-layer">
-        <div className="boot-sticker-wrapper sticker-1" ref={el => stickerWrappers.current[0] = el}>
-          <video src="/LOGO1.webm" autoPlay muted playsInline loop preload="auto" className="boot-sticker-inner" ref={el => stickerInners.current[0] = el} />
+        {/* Video 1 */}
+        <div className="boot-video-wrap" ref={video1WrapRef}>
+          <video
+            src="/LOGO1.webm"
+            autoPlay muted playsInline loop preload="auto"
+            className="boot-video"
+          />
         </div>
-        <div className="boot-sticker-wrapper sticker-2" ref={el => stickerWrappers.current[1] = el}>
-          <video src="/LOGO2.webm" autoPlay muted playsInline loop preload="auto" className="boot-sticker-inner" ref={el => stickerInners.current[1] = el} />
+
+        {/* Slash 1 — between Video 1 and Video 2 */}
+        <div className="boot-slash-wrap" ref={slash1Ref} aria-hidden="true">
+          <svg
+            className="boot-slash-svg"
+            viewBox="0 0 60 90"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M 42 4 L 18 86"
+              className="boot-slash-path"
+              stroke="#ad7b73"
+              strokeWidth="2.8"
+              strokeLinecap="round"
+            />
+          </svg>
         </div>
-        <div className="boot-sticker-wrapper sticker-3" ref={el => stickerWrappers.current[2] = el}>
-          <video src="/LOGO3.webm" autoPlay muted playsInline loop preload="auto" className="boot-sticker-inner" ref={el => stickerInners.current[2] = el} />
+
+        {/* Video 2 */}
+        <div className="boot-video-wrap" ref={video2WrapRef}>
+          <video
+            src="/LOGO2.webm"
+            autoPlay muted playsInline loop preload="auto"
+            className="boot-video"
+          />
         </div>
+
+        {/* Slash 2 — between Video 2 and Video 3 */}
+        <div className="boot-slash-wrap" ref={slash2Ref} aria-hidden="true">
+          <svg
+            className="boot-slash-svg"
+            viewBox="0 0 60 90"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M 42 4 L 18 86"
+              className="boot-slash-path"
+              stroke="#ad7b73"
+              strokeWidth="2.8"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+
+        {/* Video 3 */}
+        <div className="boot-video-wrap" ref={video3WrapRef}>
+          <video
+            src="/LOGO3.webm"
+            autoPlay muted playsInline loop preload="auto"
+            className="boot-video"
+          />
+        </div>
+
       </div>
     </div>
   );

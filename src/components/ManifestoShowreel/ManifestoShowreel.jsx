@@ -2,120 +2,86 @@ import React, { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import PixelScrollTransition from '../PixelScrollTransition/PixelScrollTransition';
 import './ManifestoShowreel.css';
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 const MANIFESTO_LINES = [
-  "CRAFTING IMMERSIVE DIGITAL EXPERIENCES WITH PRECISION",
-  "WHERE MODERN WEB ARCHITECTURE MEETS MOTION AND ART",
-  "EXPLORING BOUNDARIES BEYOND THE ORDINARY SYSTEM",
-  "WEBSITES THAT BREATHE & BRANDS THAT RESONATE",
-  "EVERY PIXEL PLACED WITH INTENTION & PURPOSE",
+  "I'm Shourya, a developer and engineering student based in Delhi, India.",
+  "Currently pursuing B.Tech in Industrial Internet of Things at GGSIPU.",
+  "I work at the intersection of software engineering, intelligent systems, and design.",
+  "My focus is building digital products that are functional, thoughtful, and technically sound.",
+  "I work primarily with React, JavaScript, Python, Framer, Gsap and modern web technologies.",
+  "From frontend interfaces to backend systems, I enjoy bringing ideas to life.",
+  "PlacePro reflects my interest in building practical, real-world web applications.",
+  "Beyond development, I explore emerging technologies through engineering projects and hackathons.",
+  "I believe good engineering is not just about making things work, but making them work exceptionally well.",
 ];
 
-export default function ManifestoShowreel() {
-  const rootRef     = useRef(null);
-  const textRef     = useRef(null);
-  const badgeRef    = useRef(null);
-  const videoCardRef = useRef(null);
+export default function ManifestoShowreel({ isHeroReady = true }) {
+  const rootRef = useRef(null);
+  const linesContainerRef = useRef(null);
+  const lineRefs = useRef([]);
 
   useGSAP(() => {
-    if (!rootRef.current) return;
+    if (!rootRef.current || !linesContainerRef.current) return;
 
-    // Badge entrance
-    gsap.fromTo(badgeRef.current,
-      { opacity: 0, x: -16 },
-      {
-        opacity: 1, x: 0, duration: 0.7, ease: 'power2.out',
-        scrollTrigger: {
-          trigger: badgeRef.current,
-          start: 'top 88%',
-          toggleActions: 'play none none none',
-        },
-      }
-    );
+    const lines = lineRefs.current.filter(Boolean);
+    if (!lines.length) return;
 
-    // Line-by-line word scrub reveal
-    const lines = textRef.current.querySelectorAll('.manifesto-line');
-    lines.forEach((line) => {
+    // Alternating horizontal drift distances:
+    // Left lines glide in from the left, right lines glide in from the right
+    lines.forEach((line, i) => {
+      const isLeft = i % 2 === 0;
+      // Controlled drift (4.5vw to 7.5vw) so long sentences never clip past screen boundaries
+      const dist = isLeft ? -(4.5 + (i % 3) * 1.5) : (4.5 + (i % 3) * 1.5);
+
       gsap.fromTo(
         line,
-        { opacity: 0.1, y: 20 },
         {
+          x: `${dist}vw`,
+          opacity: 0.25,
+        },
+        {
+          x: '0vw',
           opacity: 1,
-          y: 0,
-          duration: 1.1,
-          ease: 'power2.out',
+          ease: 'power1.out',
           scrollTrigger: {
-            trigger: line,
-            start: 'top 88%',
-            end: 'top 52%',
+            trigger: rootRef.current,
+            start: 'top 85%',
+            end: 'center 48%',
             scrub: 1.2,
           },
         }
       );
     });
 
-    // Video Reel Scale & Clip Expansion
-    if (videoCardRef.current) {
-      gsap.fromTo(
-        videoCardRef.current,
-        { scale: 0.86, borderRadius: '20px' },
-        {
-          scale: 1.0,
-          borderRadius: '0px',
-          ease: 'none',
-          scrollTrigger: {
-            trigger: videoCardRef.current,
-            start: 'top 80%',
-            end: 'top 15%',
-            scrub: true,
-          },
-        }
-      );
-    }
-  }, { scope: rootRef });
+  }, { scope: rootRef, dependencies: [isHeroReady] });
 
   return (
     <section className="manifesto-showreel-section" ref={rootRef} id="manifesto">
+      {/* 1. Pixelated Scroll Curtain Transition from Cream Hero */}
+      <PixelScrollTransition
+        targetColor="#ff6831"
+        parentRef={rootRef}
+        isEnabled={isHeroReady}
+      />
 
-      {/* Section Badge */}
-      <div className="manifesto-header-badge" ref={badgeRef}>
-        <span className="badge-number font-mono">002 /</span>
-        <span className="badge-title font-mono">PHILOSOPHY &amp; MANIFESTO</span>
-      </div>
-
-      {/* Manifesto Lines */}
-      <div className="manifesto-text-container" ref={textRef}>
-        {MANIFESTO_LINES.map((line, idx) => (
-          <h2 key={idx} className="manifesto-line">
-            {line}
-          </h2>
-        ))}
-      </div>
-
-      {/* Embedded Showreel Preview */}
-      <div
-        className="showreel-card-wrapper"
-        ref={videoCardRef}
-        data-cursor="SHOWREEL"
-      >
-        <video
-          src="/WEBNAME.webm"
-          autoPlay
-          muted
-          playsInline
-          loop
-          preload="auto"
-          className="showreel-video"
-        />
-        <div className="showreel-overlay">
-          <span className="showreel-label">FOUNDRY SHOWREEL 2026</span>
-          <span className="showreel-tag font-mono">HIGH FREQUENCY MOTION</span>
+      <div className="manifesto-inner">
+        {/* Central Converging Lines (Synapser Studio alternating slide-in) */}
+        <div className="manifesto-lines-container" ref={linesContainerRef}>
+          {MANIFESTO_LINES.map((text, i) => (
+            <p
+              key={i}
+              ref={(el) => (lineRefs.current[i] = el)}
+              className="manifesto-line"
+            >
+              {text}
+            </p>
+          ))}
         </div>
       </div>
-
     </section>
   );
 }

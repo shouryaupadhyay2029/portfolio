@@ -1,147 +1,113 @@
 /* ═══════════════════════════════════════════════════════════════
-   ManifestoShowreel.css
-   Palette: #c5bfab (slightly deeper cream) — transitional
+   ManifestoShowreel.css — High-Contrast Vibrant Orange Manifesto
+   Transitions cream hero → vivid orange #ff6831
+   Alternating kinetic line convergence inspired by Synapser Studio
    ═══════════════════════════════════════════════════════════════ */
 
 .manifesto-showreel-section {
   position: relative;
   width: 100%;
-  min-height: 100vh;
-  background-color: #cdc8b3; /* slightly warm stone — transitions from hero cream */
-  padding: 7rem 3rem 9rem 3rem;
+  background-color: #ff6831; /* Vibrant Orange Swatch rgb(255, 104, 49) */
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
-/* Subtle noise texture layer on this section too */
+/* Subtle film grain without shifting base orange */
 .manifesto-showreel-section::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.10'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
   background-repeat: repeat;
   mix-blend-mode: multiply;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
-/* Section Badge */
-.manifesto-header-badge {
+/* ── Inner Content Wrapper ─────────────────────────────────────── */
+.manifesto-inner {
   position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 5rem;
-  align-self: flex-start;
-  max-width: 1200px;
+  z-index: 2;
   width: 100%;
-}
-
-.badge-number {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  color: #d86f2a;
-}
-
-.badge-title {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(40, 37, 30, 0.55);
-}
-
-/* Manifesto Text */
-.manifesto-text-container {
-  position: relative;
-  z-index: 1;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  align-items: flex-start;
-  text-align: left;
-  max-width: 1200px;
+  justify-content: center;
+  align-items: center;
+  padding: clamp(2.5rem, 5vh, 4rem) clamp(1.5rem, 4vw, 3.5rem) clamp(5.5rem, 11vh, 8rem);
+  box-sizing: border-box;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── Central Converging Lines (Synapser Studio Layout) ────────── */
+.manifesto-lines-container {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  margin-bottom: 7rem;
+  max-width: 100%;
+  gap: clamp(0.35rem, 1vh, 0.75rem);
+  margin: 0 auto;
+  transform: translateY(-4.5vh);
 }
 
 .manifesto-line {
-  font-family: 'General Sans', sans-serif;
-  font-size: clamp(1.35rem, 3.6vw, 3.5rem);
+  font-family: 'Syne', 'General Sans', sans-serif;
   font-weight: 800;
-  letter-spacing: -0.025em;
-  line-height: 1.12;
-  color: #1e1c18;
+  font-size: clamp(11px, 1.18vw, 17.5px);
+  line-height: 1.32;
+  letter-spacing: 0.002em;
+  color: #111009;
+  text-transform: uppercase;
+  text-align: center;
   margin: 0;
+  padding: 0 1vw;
+  white-space: nowrap;
+  cursor: default;
   will-change: transform, opacity;
+  transition: opacity 0.3s ease, transform 0.3s ease, color 0.3s ease;
 }
 
-/* Showreel Card */
-.showreel-card-wrapper {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 1200px;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.14);
-  will-change: transform, border-radius;
-  cursor: none;
+/* ── Interactive Focus Spotlight on Hover ──────────────────────── */
+.manifesto-lines-container:hover .manifesto-line:not(:hover) {
+  opacity: 0.35 !important;
 }
 
-.showreel-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.manifesto-line:hover {
+  transform: scale(1.02);
+  color: #000000;
+  letter-spacing: 0.015em;
 }
 
-.showreel-overlay {
-  position: absolute;
-  bottom: 2rem;
-  left: 2rem;
-  right: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 5;
-}
-
-.showreel-label {
-  font-family: 'General Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: #ffffff;
-  text-transform: uppercase;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-}
-
-.showreel-tag {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #ffffff;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 5px 14px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+/* ── Responsive Overrides ─────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .manifesto-inner {
+    padding: 5rem 1.5rem;
+  }
+  .manifesto-line {
+    font-size: clamp(10px, 1.35vw, 14.5px);
+  }
+  .manifesto-lines-container {
+    gap: 0.55rem;
+  }
 }
 
 @media (max-width: 768px) {
-  .manifesto-showreel-section {
-    padding: 5rem 1.5rem 6rem 1.5rem;
+  .manifesto-inner {
+    padding: 4rem 1rem;
   }
-  .manifesto-text-container {
-    margin-bottom: 4rem;
+  .manifesto-line {
+    font-size: clamp(11px, 2.8vw, 15px);
+    white-space: normal;
+    padding: 0;
+    line-height: 1.35;
+  }
+  .manifesto-lines-container {
+    gap: 0.75rem;
   }
 }

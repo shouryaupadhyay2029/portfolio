@@ -9,7 +9,7 @@
   height: 100vh;
   min-height: 720px;
   background-color: #f3eee3;
-  overflow: hidden;
+  overflow: visible;  /* FOUNDRY travels far left — must not clip */
   color: #ad7b73;
   user-select: none;
   box-sizing: border-box;
@@ -62,7 +62,7 @@
 .oviedo-text-block {
   position: absolute;
   z-index: 10;
-  pointer-events: none;
+  pointer-events: auto;
   will-change: transform, opacity, filter;
 }
 
@@ -121,13 +121,13 @@
   width: clamp(230px, 20vw, 320px);
   height: clamp(290px, 25vw, 400px);
   padding: 0;
-  border-radius: 0px !important; /* Sharp 90-degree solid corners, no curves */
-  background-color: #0e0d0c;
-  border: 1.5px solid #ad7b73; /* Solid crisp border framing */
-  box-shadow: 0 28px 60px rgba(24, 20, 18, 0.35);
-  overflow: hidden;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease, border-color 0.4s ease;
-  will-change: transform, opacity, filter;
+  border-radius: 0px;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
   cursor: pointer;
 }
 
@@ -175,10 +175,7 @@
 /* ═══════════════════════════════════════════════════════════════
    CLEAN CYBERNETIC HOVER PHYSICS: Duotone Morphed + Glitch Split
    ═══════════════════════════════════════════════════════════════ */
-.hero-solid-photo-card:hover {
-  border-color: #ad7b73;
-  box-shadow: 0 32px 70px rgba(173, 123, 115, 0.4), 0 0 25px rgba(173, 123, 115, 0.25);
-}
+
 
 /* 1. Base image morphs into dramatic Warm Terracotta Thermal Duotone */
 .hero-solid-photo-card:hover .base-img {
@@ -237,6 +234,10 @@
   opacity: 0.85;
   pointer-events: auto;
 }
+
+
+
+
 
 /* Responsive Overrides */
 @media (max-width: 900px) {

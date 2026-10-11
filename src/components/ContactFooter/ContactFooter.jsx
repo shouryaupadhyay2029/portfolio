@@ -26,7 +26,8 @@ export default function ContactFooter() {
 
       <div className="contact-main">
         <h2 className="contact-headline">
-          LET&apos;S BUILD SOMETHING <span className="headline-highlight">EXTRAORDINARY.</span>
+          LET&apos;S BUILD
+          <span className="headline-highlight">EXTRAORDINARY.</span>
         </h2>
 
         <div className="contact-action-row">
