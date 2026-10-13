@@ -31,7 +31,7 @@ export default function ExperienceMatrix() {
   const [activeTab, setActiveTab] = useState('stack');
 
   return (
-    <section className="experience-matrix-section" id="about">
+    <section className="experience-matrix-section" id="experience">
       <div className="matrix-header font-mono">
         <div className="matrix-badge">
           <span className="badge-num">003 /</span> EXPERIENCE & CAPABILITIES

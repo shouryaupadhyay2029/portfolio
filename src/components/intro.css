@@ -1,0 +1,178 @@
+.intro {
+  --orange: #ff6831;
+  --ink: #111009;
+  --cream: #f4ede4;
+  --font-display: var(--font-heading, 'Astera Casty'), system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  overflow-x: clip;
+  overflow-y: visible;
+  background: var(--orange);
+  color: var(--ink);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+}
+
+.mask { display: block; overflow: hidden; }
+.mask__in { display: block; will-change: transform; }
+.wave-char {
+  display: inline-block;
+  will-change: transform;
+}
+
+.layer-text { position: absolute; inset: 0; z-index: 30; }
+
+.headline {
+  position: absolute;
+  top: 26%;
+  left: 3vw;
+  right: 3vw;
+  margin: 0;
+  text-align: center;
+  font-family: 'Arial Black', Arial, sans-serif;
+  font-weight: 900;
+  font-size: clamp(36px, min(7.5vw, 8vh), 88px);
+  line-height: 0.84;
+  letter-spacing: -0.065em;
+  transform-origin: 50% 0;
+}
+.headline__line { padding: 0.04em 0; white-space: nowrap; }
+
+.sticker {
+  position: absolute;
+  left: 7vw;
+  top: 37vh;
+  width: clamp(108px, 11vw, 160px);
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+  transform-origin: 50% 90%;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.22));
+  mix-blend-mode: multiply;
+}
+
+.chapters {
+  position: absolute;
+  left: 50%;
+  bottom: 28%;
+  transform: translateX(-50%);
+  width: min(800px, 88vw);
+  display: grid;
+}
+.chapter { grid-area: 1 / 1; align-self: end; display: grid; gap: 0.9em; }
+.chapter__line {
+  margin: 0;
+  text-align: center;
+  font-family: 'Arial Black', Arial, sans-serif;
+  font-weight: 900;
+  font-size: clamp(13px, 1.2vw, 18px);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+
+.photo {
+  position: absolute;
+  top: 66%;
+  left: 50%;
+  width: 0;
+  aspect-ratio: 4 / 5;
+  z-index: 31;
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+  background: #111;
+}
+.photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 34%;
+  filter: contrast(1.06);
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+.photo__tint {
+  position: absolute;
+  inset: 0;
+  background: var(--orange);
+  mix-blend-mode: multiply;
+  opacity: 0.07;
+}
+
+.wordmark {
+  position: absolute;
+  z-index: 32;
+  top: 10%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  color: var(--cream);
+  font-weight: 800;
+  font-size: clamp(36px, min(17vw, 13.6vh), 156px);
+  line-height: 0.92;
+  letter-spacing: 0;
+  pointer-events: none;
+  user-select: none;
+}
+.wordmark__ch { padding: 0.02em 0 0.04em; }
+
+.shade {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  z-index: 32;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), transparent 46%);
+}
+.lab {
+  position: absolute;
+  z-index: 33;
+  color: var(--ink);
+  font: 400 11px/1 var(--font-mono);
+  letter-spacing: 0.22em;
+  white-space: nowrap;
+}
+.lab--bl { bottom: 3vh; left: 24px; }
+.lab--br { bottom: 3vh; right: 24px; }
+
+@media (max-width: 767px) {
+  .headline { top: 26%; left: 5vw; right: 5vw; font-size: clamp(30px, min(8vw, 7vh), 52px); line-height: 0.9; }
+  .headline__line { white-space: normal; text-wrap: balance; }
+  .sticker { left: 5vw; top: 33vh; width: 96px; }
+  .chapters { bottom: 28%; width: 90vw; }
+  .chapter__line { font-size: 12px; }
+  .photo img { object-position: 50% 30%; }
+  .lab { font-size: 9px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5vh;
+    padding: 12vh 6vw;
+  }
+  .layer-text, .headline, .chapters, .chapter, .wordmark {
+    position: static;
+    transform: none;
+  }
+  .layer-text { display: flex; flex-direction: column; align-items: center; gap: 4vh; }
+  .chapters { width: min(800px, 100%); display: flex; flex-direction: column; gap: 2vh; }
+  .headline { font-size: clamp(28px, 6vw, 72px); }
+  .sticker { position: static; width: 96px; }
+  .photo { position: relative; inset: auto; top: auto; left: auto; width: min(420px, 90vw); height: auto; transform: none; }
+  .mask__in { transform: none !important; }
+  .shade, .lab { display: none; }
+  .wordmark { font-size: 15vw; }
+}

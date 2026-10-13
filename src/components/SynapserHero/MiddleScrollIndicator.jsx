@@ -7,8 +7,8 @@ import './MiddleScrollIndicator.css';
  */
 const MiddleScrollIndicator = forwardRef((props, ref) => {
   const handleClick = () => {
-    // Smooth scroll to next scene (#works or manifesto)
-    const nextSection = document.querySelector('#works') || document.querySelector('#manifesto');
+    // Smooth scroll to the introduction section
+    const nextSection = document.querySelector('#about') || document.querySelector('#works');
     if (nextSection) {
       nextSection.scrollIntoView({ behavior: 'smooth' });
     } else {

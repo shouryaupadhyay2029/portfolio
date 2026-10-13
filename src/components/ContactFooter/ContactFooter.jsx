@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import CrowdCanvas from '../CrowdCanvas/CrowdCanvas';
 import './ContactFooter.css';
 
 export default function ContactFooter() {
@@ -74,6 +75,16 @@ export default function ContactFooter() {
             TWITTER / X ↗
           </a>
         </div>
+      </div>
+
+      {/* Walking Peeps Interactive Crowd Footer Stage */}
+      <div className="footer-crowd-stage" aria-hidden="true">
+        <CrowdCanvas
+          src="/images/peeps/all-peeps.png"
+          rows={15}
+          cols={7}
+          className="footer-crowd-canvas"
+        />
       </div>
 
       <div className="contact-bottom-bar font-mono">

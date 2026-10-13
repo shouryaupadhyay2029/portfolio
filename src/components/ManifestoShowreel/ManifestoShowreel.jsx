@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -23,26 +23,50 @@ export default function ManifestoShowreel({ isHeroReady = true }) {
   const rootRef = useRef(null);
   const linesContainerRef = useRef(null);
   const lineRefs = useRef([]);
+  const logoWrapRef = useRef(null);
+  const videoRef = useRef(null);
+
+  // Guarantee continuous video playback
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => { });
+    }
+  }, []);
 
   useGSAP(() => {
     if (!rootRef.current || !linesContainerRef.current) return;
 
+    // ── Smooth Corner Entrance for LOGO1 ──
+    if (logoWrapRef.current) {
+      gsap.fromTo(
+        logoWrapRef.current,
+        { opacity: 0, scale: 0.85, y: -20 },
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: rootRef.current,
+            start: 'top 85%',
+            end: 'center 45%',
+            scrub: 1.2,
+          },
+        }
+      );
+    }
+
     const lines = lineRefs.current.filter(Boolean);
     if (!lines.length) return;
 
-    // Alternating horizontal drift distances:
-    // Left lines glide in from the left, right lines glide in from the right
+    // Alternating scrub lines entrance from both sides
     lines.forEach((line, i) => {
       const isLeft = i % 2 === 0;
-      // Controlled drift (4.5vw to 7.5vw) so long sentences never clip past screen boundaries
       const dist = isLeft ? -(4.5 + (i % 3) * 1.5) : (4.5 + (i % 3) * 1.5);
 
       gsap.fromTo(
         line,
-        {
-          x: `${dist}vw`,
-          opacity: 0.25,
-        },
+        { x: `${dist}vw`, opacity: 0.25 },
         {
           x: '0vw',
           opacity: 1,
@@ -69,7 +93,22 @@ export default function ManifestoShowreel({ isHeroReady = true }) {
       />
 
       <div className="manifesto-inner">
-        {/* Central Converging Lines (Synapser Studio alternating slide-in) */}
+        {/* Animated LOGO1 Background-Removed Mascot in Top-Left Corner */}
+        <div className="manifesto-logo-wrap" ref={logoWrapRef}>
+          <video
+            ref={videoRef}
+            src="/LOGO1.webm"
+            autoPlay
+            muted
+            playsInline
+            loop
+            preload="auto"
+            className="manifesto-logo-video"
+            aria-hidden="true"
+          />
+        </div>
+
+        {/* Alternating lines slide in from both sides as the section enters view */}
         <div className="manifesto-lines-container" ref={linesContainerRef}>
           {MANIFESTO_LINES.map((text, i) => (
             <p

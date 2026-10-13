@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { usePageTransition } from '../../context/PageTransitionContext';
 import './BlockNavigation.css';
 
 gsap.registerPlugin(useGSAP);
@@ -8,7 +9,7 @@ gsap.registerPlugin(useGSAP);
 const NAV_LINKS = [
   { id: '01', label: 'HOMEPAGE',       href: '#hero' },
   { id: '02', label: 'SELECTED WORKS', href: '#works' },
-  { id: '03', label: 'MANIFESTO',      href: '#manifesto' },
+  { id: '03', label: 'ABOUT',          href: '#about' },
   { id: '04', label: 'TECH MATRIX',    href: '#experience' },
   { id: '05', label: 'GET IN TOUCH',   href: '#contact' },
 ];
@@ -176,15 +177,17 @@ export default function BlockNavigation() {
     }
   };
 
+  const { triggerTransition } = usePageTransition();
+
   const handleLinkClick = (e, href) => {
     e.preventDefault();
     toggleMenu();
     setTimeout(() => {
-      const target = document.querySelector(href);
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 600);
+      triggerTransition({
+        targetId: href,
+        label: 'blend',
+      });
+    }, 450);
   };
 
   return (

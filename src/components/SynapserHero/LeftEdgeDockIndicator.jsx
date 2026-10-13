@@ -7,7 +7,7 @@ import './LeftEdgeDockIndicator.css';
  */
 const LeftEdgeDockIndicator = forwardRef((props, ref) => {
   const handleClick = () => {
-    const nextSection = document.querySelector('#works') || document.querySelector('#manifesto');
+    const nextSection = document.querySelector('#about') || document.querySelector('#works');
     if (nextSection) {
       nextSection.scrollIntoView({ behavior: 'smooth' });
     } else {

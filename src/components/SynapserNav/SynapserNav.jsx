@@ -5,7 +5,7 @@ import './SynapserNav.css';
 const NAV_ITEMS = [
   { id: '01', label: 'HOME',      href: '#hero' },
   { id: '02', label: 'WORKS',     href: '#works' },
-  { id: '03', label: 'MANIFESTO', href: '#manifesto' },
+  { id: '03', label: 'ABOUT',     href: '#about' },
   { id: '04', label: 'MATRIX',    href: '#experience' },
   { id: '05', label: 'CONTACT',   href: '#contact' },
 ];
